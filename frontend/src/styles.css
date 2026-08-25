@@ -1,0 +1,121 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --border: #262b36;
+  --text: #e6e9ef;
+  --muted: #9aa4b2;
+  --accent: #4f8cff;
+  --ok: #4caf50;
+  --bad: #ef5350;
+  --warn: #ffa726;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.app { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+}
+header h1 { margin: 0; font-size: 22px; }
+.subtitle { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+nav { display: flex; gap: 8px; }
+nav button {
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px;
+  cursor: pointer;
+}
+nav button.active { border-color: var(--accent); color: var(--accent); }
+.badge {
+  background: var(--accent); color: #fff; border-radius: 10px;
+  padding: 0 6px; margin-left: 6px; font-size: 12px;
+}
+
+.layout { display: grid; grid-template-columns: 1fr 380px; gap: 16px; }
+@media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
+
+.map-wrap { display: flex; flex-direction: column; gap: 8px; }
+.map { height: 620px; border-radius: 12px; border: 1px solid var(--border); }
+.map-hint { color: var(--muted); font-size: 13px; margin: 0; }
+
+aside { display: flex; flex-direction: column; gap: 16px; }
+
+.panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+}
+.panel h2 { margin: 0 0 12px; font-size: 16px; }
+.panel h3 { margin: 16px 0 8px; font-size: 14px; color: var(--muted); }
+.panel.muted { color: var(--muted); }
+
+.row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; }
+input {
+  background: #0d1016; border: 1px solid var(--border); color: var(--text);
+  padding: 8px; border-radius: 6px; width: 100%;
+}
+button {
+  background: var(--accent); color: #fff; border: 0;
+  padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.secondary { background: #2a303c; }
+
+.result-hero { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px; }
+.result-hero > div { display: flex; flex-direction: column; }
+.result-hero strong { font-size: 20px; }
+.label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.sub { color: var(--muted); font-size: 13px; }
+.note { color: var(--muted); font-size: 12px; font-style: italic; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; }
+.row-bad td { opacity: .6; }
+td.actions { display: flex; gap: 5px; }
+td.actions button { padding: 3px 9px; font-size: 13px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; display: flex; flex-direction: column;
+}
+.stat-value { font-size: 26px; font-weight: 600; }
+.stat-label { color: var(--muted); font-size: 13px; }
+.stat-sub { color: var(--muted); font-size: 12px; }
+.stat.bad .stat-value { color: var(--bad); }
+.stat.warn .stat-value { color: var(--warn); }
+
+.dashboard { display: flex; flex-direction: column; gap: 16px; }
+
+.ok { color: var(--ok); }
+.bad { color: var(--bad); }
+.warn { color: var(--warn); }
+.error { color: var(--bad); font-size: 13px; }
+.error.banner {
+  background: rgba(239,83,80,.1); border: 1px solid var(--bad);
+  padding: 10px 14px; border-radius: 8px;
+}
+
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #2a303c; text-transform: uppercase; letter-spacing: .04em; }
+.tag.en_route { background: rgba(79,140,255,.2); color: var(--accent); }
+.tag.pending { background: rgba(255,167,38,.2); color: var(--warn); }
+.tag.completed { background: rgba(76,175,80,.2); color: var(--ok); }
+
+/* Emoji map markers - avoids Leaflet's bundler-broken default icon images */
+.emoji-marker .pin {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #fff; border: 3px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; box-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+.leaflet-popup-content { font-size: 13px; }

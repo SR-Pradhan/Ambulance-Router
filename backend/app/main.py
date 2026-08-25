@@ -12,6 +12,9 @@ app = FastAPI(title="Ambulance Route Optimizer")
 # These are DEV origins (Vite's default 5173, CRA's 3000). A deployed app would
 # list its real domain instead of localhost, and would not use "*".
 ALLOWED_ORIGINS = [
+    # 5174 is this project's Vite port (5173 was already taken on this machine).
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
