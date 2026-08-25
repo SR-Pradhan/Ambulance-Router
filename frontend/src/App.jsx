@@ -103,7 +103,7 @@ export default function App() {
         <div>
           <h1>Ambulance Route Optimizer</h1>
           <p className="subtitle">
-            Simulated data — a portfolio demonstration, not a medically validated
+            Simulated data. A portfolio demonstration, not a medically validated
             system.
           </p>
         </div>
@@ -124,9 +124,9 @@ export default function App() {
       </header>
 
       {connError && (
-        <p className="error banner">
-          Cannot reach the API at localhost:8001 — {connError}. Is the backend
-          running (<code>uvicorn app.main:app --reload --port 8001</code>)?
+        <p className="error-banner">
+          Cannot reach the API at localhost:8001. {connError}. Check the backend is
+          running with <code>uvicorn app.main:app --reload --port 8001</code>
         </p>
       )}
 

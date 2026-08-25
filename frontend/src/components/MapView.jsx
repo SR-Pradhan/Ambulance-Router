@@ -6,21 +6,31 @@ import L from "leaflet";
 // break under a bundler (the classic "markers are invisible" bug). Using
 // divIcon with inline HTML sidesteps the whole asset problem and makes each
 // marker type instantly distinguishable on the map.
-function emojiIcon(emoji, color) {
+function emojiIcon(emoji, stateClass) {
   return L.divIcon({
     className: "emoji-marker",
-    html: `<div class="pin" style="border-color:${color}">${emoji}</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -16],
+    html: `<div class="pin ${stateClass}">${emoji}</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15],
   });
 }
 
-const HOSPITAL_OPEN = emojiIcon("🏥", "#2e7d32");
-const HOSPITAL_FULL = emojiIcon("🏥", "#c62828");
-const AMBULANCE = emojiIcon("🚑", "#1565c0");
-const AMBULANCE_IDLE = emojiIcon("🚑", "#9e9e9e");
-const PATIENT = emojiIcon("📍", "#ad1457");
+// A full hospital gets a DASHED ring as well as a red one, so its state is not
+// carried by colour alone. The popup states it in words too.
+const HOSPITAL_OPEN = emojiIcon("🏥", "is-open");
+const HOSPITAL_FULL = emojiIcon("🏥", "is-full");
+const AMBULANCE = emojiIcon("🚑", "is-active");
+const AMBULANCE_IDLE = emojiIcon("🚑", "is-idle");
+const PATIENT = emojiIcon("📍", "is-patient");
+
+const PHASE_LABEL = {
+  to_patient: "Travelling to patient",
+  to_hospital: "Transporting to hospital",
+  arrived: "Arrived at hospital",
+  idle: "Available",
+  busy_unassigned: "Busy, no active request",
+};
 
 // Make the map behave the way a Mac trackpad expects.
 //
@@ -55,6 +65,23 @@ function TrackpadGestures() {
 
     // passive: false is required or preventDefault() is ignored.
     container.addEventListener("wheel", onWheel, { passive: false });
+
+    // Leaflet writes the character U+2212 into its zoom-out button. Hiding it
+    // with CSS would leave the character in the DOM (and in the accessibility
+    // tree), so remove the text node and label the button properly instead.
+    // The bar itself is drawn as a shape in styles.css.
+    const zoomOut = container.querySelector(".leaflet-control-zoom-out");
+    if (zoomOut) {
+      zoomOut.textContent = "";
+      zoomOut.setAttribute("aria-label", "Zoom out");
+      zoomOut.setAttribute("title", "Zoom out");
+    }
+    const zoomIn = container.querySelector(".leaflet-control-zoom-in");
+    if (zoomIn) {
+      zoomIn.setAttribute("aria-label", "Zoom in");
+      zoomIn.setAttribute("title", "Zoom in");
+    }
+
     return () => container.removeEventListener("wheel", onWheel);
   }, [map]);
 
@@ -102,14 +129,12 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
           >
             <Popup>
               <strong>{h.name}</strong>
-              <br />
-              {h.available_beds} of {h.total_beds} beds free
-              <br />
-              {h.accepting ? (
-                <span className="ok">Accepting patients</span>
-              ) : (
-                <span className="bad">FULL — excluded from dispatch</span>
-              )}
+              <div className="popup-row">
+                {h.available_beds} of {h.total_beds} beds free
+              </div>
+              <span className={h.accepting ? "chip chip-good" : "chip chip-critical"}>
+                {h.accepting ? "Accepting patients" : "Full, excluded from dispatch"}
+              </span>
             </Popup>
           </Marker>
         ))}
@@ -118,9 +143,10 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
         {patient && (
           <Marker position={[patient.lat, patient.lng]} icon={PATIENT}>
             <Popup>
-              Patient
-              <br />
-              {patient.lat.toFixed(5)}, {patient.lng.toFixed(5)}
+              <strong>Patient</strong>
+              <div className="popup-row">
+                {patient.lat.toFixed(5)}, {patient.lng.toFixed(5)}
+              </div>
             </Popup>
           </Marker>
         )}
@@ -149,18 +175,18 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
               >
                 <Popup>
                   <strong>Ambulance {a.ambulance_id}</strong>
-                  <br />
                   {moving ? (
-                    <>
-                      {a.phase.replace("_", " ")} — {a.progress_percent}%
-                      <br />
-                      {a.travelled_km} / {a.total_km} km
-                      <br />
-                      {a.remaining_minutes} min remaining
-                      <br />→ {a.hospital?.name}
-                    </>
+                    <div className="popup-row">
+                      <div>{PHASE_LABEL[a.phase] || a.phase}</div>
+                      <div>
+                        {a.progress_percent}% complete, {a.travelled_km} of{" "}
+                        {a.total_km} km
+                      </div>
+                      <div>{a.remaining_minutes} min remaining</div>
+                      <div>Destination: {a.hospital?.name}</div>
+                    </div>
                   ) : (
-                    a.phase
+                    <div className="popup-row">{PHASE_LABEL[a.phase] || a.phase}</div>
                   )}
                 </Popup>
               </Marker>
@@ -170,8 +196,8 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
       </MapContainer>
 
       <p className="map-hint">
-        Click anywhere on the map to place the patient, then create a request.
-        Two-finger swipe or drag to pan · pinch to zoom.
+        Click anywhere on the map to place the patient. Swipe or drag to pan,
+        pinch to zoom.
       </p>
     </div>
   );

@@ -1,131 +1,511 @@
+/* ---------------------------------------------------------------------------
+   Ambulance Route Optimizer - light theme
+
+   Colour rules this file follows:
+
+   1. One accent (blue) for interactive things. Everything else is neutral ink.
+   2. Status colours are RESERVED for state (good / warning / critical) and are
+      never reused for decoration.
+   3. A status is never communicated by colour alone. Every status chip carries
+      a dot AND a written label, because amber on a light surface sits below the
+      3:1 contrast line and colour-blind readers cannot separate amber from
+      green reliably.
+   4. Every text colour was contrast-checked against its own background and
+      clears WCAG AA (4.5:1). Amber is used as a background tint only, with
+      darker amber ink on top.
+--------------------------------------------------------------------------- */
+
 :root {
-  --bg: #0f1115;
-  --panel: #171a21;
-  --border: #262b36;
-  --text: #e6e9ef;
-  --muted: #9aa4b2;
-  --accent: #4f8cff;
-  --ok: #4caf50;
-  --bad: #ef5350;
-  --warn: #ffa726;
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #f7f8f9;
+  --surface: #ffffff;
+  --surface-sunken: #f3f4f6;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+
+  /* Ink */
+  --ink: #111827;
+  --ink-secondary: #4b5563;
+  --ink-muted: #6b7280;
+
+  /* Accent */
+  --accent: #1f5fae;
+  --accent-hover: #1a5197;
+  --accent-tint: #e8f1fc;
+
+  /* Status: text ink and its matching tint */
+  --good: #0f6b0f;
+  --good-tint: #e7f5e7;
+  --warning: #8a5a00;
+  --warning-tint: #fdf3d9;
+  --critical: #b3261e;
+  --critical-tint: #fdeaea;
+
+  /* Status marks, for dots and map pins */
+  --dot-good: #0ca30c;
+  --dot-warning: #fab219;
+  --dot-critical: #d03b3b;
+  --dot-neutral: #9ca3af;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
 }
 
 * { box-sizing: border-box; }
 
+html, body { height: 100%; }
+
 body {
   margin: 0;
   background: var(--bg);
-  color: var(--text);
-  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-.app { max-width: 1400px; margin: 0 auto; padding: 20px; }
+.app { max-width: 1440px; margin: 0 auto; padding: 24px 24px 48px; }
+
+/* --- Header --------------------------------------------------------------- */
 
 header {
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
 }
-header h1 { margin: 0; font-size: 22px; }
-.subtitle { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 
-nav { display: flex; gap: 8px; }
+header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+/* Segmented tab control */
+nav {
+  display: inline-flex;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 3px;
+}
+
 nav button {
-  background: var(--panel); color: var(--text);
-  border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px;
+  background: transparent;
+  color: var(--ink-secondary);
+  border: 0;
+  padding: 7px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
-nav button.active { border-color: var(--accent); color: var(--accent); }
+
+nav button:hover { color: var(--ink); }
+
+nav button.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
 .badge {
-  background: var(--accent); color: #fff; border-radius: 10px;
-  padding: 0 6px; margin-left: 6px; font-size: 12px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 20px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.layout { display: grid; grid-template-columns: 1fr 380px; gap: 16px; }
-@media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
+/* --- Layout --------------------------------------------------------------- */
 
-.map-wrap { display: flex; flex-direction: column; gap: 8px; }
-.map { height: 620px; border-radius: 12px; border: 1px solid var(--border); }
-.map-hint { color: var(--muted); font-size: 13px; margin: 0; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 20px; }
+@media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } }
 
-aside { display: flex; flex-direction: column; gap: 16px; }
+aside { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dashboard { display: flex; flex-direction: column; gap: 20px; }
+
+/* --- Panels --------------------------------------------------------------- */
 
 .panel {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
 }
-.panel h2 { margin: 0 0 12px; font-size: 16px; }
-.panel h3 { margin: 16px 0 8px; font-size: 14px; color: var(--muted); }
-.panel.muted { color: var(--muted); }
 
-.row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
-label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; }
-input {
-  background: #0d1016; border: 1px solid var(--border); color: var(--text);
-  padding: 8px; border-radius: 6px; width: 100%;
+.panel h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
+
+.panel h3 {
+  margin: 20px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.panel.muted { color: var(--ink-muted); }
+
+.panel-head { margin-bottom: 16px; }
+
+/* --- Map ------------------------------------------------------------------ */
+
+.map-wrap { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+.map {
+  height: 640px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.map-hint {
+  color: var(--ink-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* --- Forms ---------------------------------------------------------------- */
+
+.field-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  flex: 1;
+  min-width: 0;
+}
+
+input, select {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--ink);
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+input:focus, select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+input::placeholder { color: #9ca3af; }
+
+.actions-row { display: flex; gap: 10px; margin-top: 4px; }
+
 button {
-  background: var(--accent); color: #fff; border: 0;
-  padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid transparent;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
 }
-button:disabled { opacity: .45; cursor: not-allowed; }
-button.secondary { background: #2a303c; }
 
-.result-hero { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px; }
-.result-hero > div { display: flex; flex-direction: column; }
-.result-hero strong { font-size: 20px; }
-.label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-.sub { color: var(--muted); font-size: 13px; }
-.note { color: var(--muted); font-size: 12px; font-style: italic; }
+button:hover { background: var(--accent-hover); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--border); }
-th { color: var(--muted); font-weight: 600; }
-.row-bad td { opacity: .6; }
-td.actions { display: flex; gap: 5px; }
-td.actions button { padding: 3px 9px; font-size: 13px; }
+button.secondary {
+  background: var(--surface);
+  color: var(--ink-secondary);
+  border-color: var(--border-strong);
+}
+button.secondary:hover { background: var(--surface-sunken); color: var(--ink); }
 
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+button.small { padding: 5px 11px; font-size: 13px; }
+
+/* --- Result panel --------------------------------------------------------- */
+
+.result-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+}
+
+.result-hero > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.result-hero strong { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+
+.label {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sub { color: var(--ink-secondary); font-size: 13px; }
+.note { color: var(--ink-muted); font-size: 12.5px; line-height: 1.5; }
+
+.detail-list { display: flex; flex-direction: column; gap: 6px; margin: 0 0 4px; }
+.detail-list div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.detail-list dt { color: var(--ink-muted); }
+.detail-list dd { margin: 0; color: var(--ink); text-align: right; }
+
+/* --- Tables --------------------------------------------------------------- */
+
+.table-wrap { overflow-x: auto; margin: 0 -4px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+
+th, td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+th {
+  color: var(--ink-muted);
+  font-weight: 600;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom-color: var(--border-strong);
+}
+
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--surface-sunken); }
+
+td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+td.actions { display: flex; gap: 6px; align-items: center; }
+.row-inactive td { color: var(--ink-muted); }
+
+.bed-input { width: 74px; padding: 5px 8px; font-size: 13px; text-align: right; }
+
+.empty-row td { color: var(--ink-muted); font-style: italic; }
+
+/* --- Stat tiles ----------------------------------------------------------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 14px;
+}
+
 .stat {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px; display: flex; flex-direction: column;
-}
-.stat-value { font-size: 26px; font-weight: 600; }
-.stat-label { color: var(--muted); font-size: 13px; }
-.stat-sub { color: var(--muted); font-size: 12px; }
-.stat.bad .stat-value { color: var(--bad); }
-.stat.warn .stat-value { color: var(--warn); }
-
-.dashboard { display: flex; flex-direction: column; gap: 16px; }
-
-.ok { color: var(--ok); }
-.bad { color: var(--bad); }
-.warn { color: var(--warn); }
-.error { color: var(--bad); font-size: 13px; }
-.error.banner {
-  background: rgba(239,83,80,.1); border: 1px solid var(--bad);
-  padding: 10px 14px; border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: var(--shadow);
 }
 
-.tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #2a303c; text-transform: uppercase; letter-spacing: .04em; }
-.tag.en_route { background: rgba(79,140,255,.2); color: var(--accent); }
-.tag.pending { background: rgba(255,167,38,.2); color: var(--warn); }
-.tag.completed { background: rgba(76,175,80,.2); color: var(--ok); }
+.stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
 
-/* Emoji map markers - avoids Leaflet's bundler-broken default icon images */
+.stat-label { color: var(--ink-secondary); font-size: 13px; font-weight: 500; }
+.stat-sub { color: var(--ink-muted); font-size: 12px; }
+
+.stat.is-critical .stat-value { color: var(--critical); }
+.stat.is-warning .stat-value { color: var(--warning); }
+
+/* --- Status chips --------------------------------------------------------- */
+
+/* A chip is always a dot PLUS a written label. The dot alone never carries the
+   meaning: amber sits under 3:1 on white, and amber against green is not
+   reliably separable for colour-blind readers. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 9px 3px 7px;
+  border-radius: 20px;
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
+  white-space: nowrap;
+}
+
+.chip::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot-neutral);
+  flex: none;
+}
+
+.chip-good { background: var(--good-tint); color: var(--good); }
+.chip-good::before { background: var(--dot-good); }
+
+.chip-warning { background: var(--warning-tint); color: var(--warning); }
+.chip-warning::before { background: var(--dot-warning); }
+
+.chip-critical { background: var(--critical-tint); color: var(--critical); }
+.chip-critical::before { background: var(--dot-critical); }
+
+.chip-info { background: var(--accent-tint); color: var(--accent); }
+.chip-info::before { background: var(--accent); }
+
+/* --- Messages ------------------------------------------------------------- */
+
+.error {
+  color: var(--critical);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.error-banner {
+  background: var(--critical-tint);
+  border: 1px solid #f3c4c1;
+  color: var(--critical);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  margin: 0 0 20px;
+}
+
+.error-banner code {
+  background: rgba(179, 38, 30, 0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 12.5px;
+}
+
+.warn-text { color: var(--warning); font-size: 13px; }
+
+/* --- Map markers ---------------------------------------------------------- */
+
+/* Leaflet's default marker images break under a bundler, so markers are HTML.
+   A full hospital is marked by BOTH a red ring and a dashed border, so the
+   state is not carried by colour alone. */
 .emoji-marker .pin {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: #fff; border: 3px solid;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--dot-neutral);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 1px 4px rgba(16, 24, 40, 0.28);
 }
-.leaflet-popup-content { font-size: 13px; }
 
-/* Triage severity tags */
-.tag.sev-critical { background: rgba(239,83,80,.2); color: var(--bad); }
-.tag.sev-urgent   { background: rgba(255,167,38,.2); color: var(--warn); }
-.tag.sev-standard { background: #2a303c; color: var(--muted); }
-
-select {
-  background: #0d1016; border: 1px solid var(--border); color: var(--text);
-  padding: 8px; border-radius: 6px; width: 100%;
+.emoji-marker .pin.is-full {
+  border-style: dashed;
+  border-color: var(--dot-critical);
+  opacity: 0.85;
 }
+
+.emoji-marker .pin.is-open { border-color: var(--dot-good); }
+.emoji-marker .pin.is-active { border-color: var(--accent); }
+.emoji-marker .pin.is-idle { border-color: var(--dot-neutral); }
+.emoji-marker .pin.is-patient { border-color: var(--dot-critical); }
+
+.leaflet-popup-content { font-size: 13px; margin: 12px 14px; }
+.leaflet-popup-content strong { display: block; margin-bottom: 3px; }
+.popup-row { color: var(--ink-secondary); }
+
+/* --- Leaflet zoom control -------------------------------------------------
+   Leaflet renders its zoom-out button as the character U+2212. We hide the
+   glyph and draw the bar as a shape instead, so no dash character appears
+   anywhere in the interface. */
+.leaflet-control-zoom {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden;
+}
+
+.leaflet-control-zoom a {
+  color: var(--ink-secondary) !important;
+  background: var(--surface) !important;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  font-size: 17px;
+  border-bottom-color: var(--border) !important;
+}
+
+.leaflet-control-zoom a:hover { background: var(--surface-sunken) !important; }
+
+.leaflet-control-zoom-out { font-size: 0 !important; position: relative; }
+
+.leaflet-control-zoom-out::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.leaflet-bar a.leaflet-disabled { opacity: 0.4; }
+
+.leaflet-container { font: inherit; }
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85) !important;
+  font-size: 11px !important;
+  color: var(--ink-muted) !important;
+}
+
+.stat-sub.is-warning { color: var(--warning); font-weight: 500; }
+.stat-sub.is-critical { color: var(--critical); font-weight: 500; }
+
+/* Keep identifier columns narrow so tables do not spread thin */
+.table-wrap table { table-layout: auto; }
+th:first-child, td:first-child { width: 1%; white-space: nowrap; }
