@@ -14,7 +14,13 @@ class RoadEdge(Base):
     id = Column(Integer, primary_key=True)
     from_node_id = Column(Integer, ForeignKey("road_nodes.id"))
     to_node_id = Column(Integer, ForeignKey("road_nodes.id"))
+    # Physical length of the road in km. This never changes.
     weight = Column(Float, nullable=False)
+    # How congested this road is: 1.0 is free flowing, 2.0 is half speed.
+    # Always >= 1, because traffic can only slow a road down. Routing weights
+    # are travel TIME derived from these two columns, not from weight alone.
+    traffic_factor = Column(Float, nullable=False, default=1.0,
+                            server_default="1.0")
 
 class Hospital(Base):
     __tablename__ = "hospitals"

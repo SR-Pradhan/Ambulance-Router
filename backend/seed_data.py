@@ -45,6 +45,20 @@ def node_id(row, col):
 # and these two crossings have no bridge.
 BLOCKED = {(5, 9), (6, 10)}
 
+# Congestion per road, where 1.0 is free flowing. Anything not listed is clear.
+#
+# The southern corridor (nodes 1 to 2 to 3) is heavily congested ON PURPOSE.
+# It is the shortest route from node 1 to node 3 by distance, so congesting it
+# forces the router to choose a physically longer but genuinely faster detour.
+# Without a case like this the traffic model would be decorative: it would
+# change the ETA but never change the road taken.
+CONGESTION = {
+    (1, 2): 3.0,    # the direct southern road, gridlocked
+    (2, 3): 3.0,
+    (5, 6): 1.4,    # mild congestion on the parallel route
+    (2, 6): 1.2,
+}
+
 # --- 2. Hospitals -----------------------------------------------------------
 # Each is placed slightly OFF its nearest node, so snapping does real work.
 # Metro Care is intentionally left with 0 available beds: it is the live test
@@ -123,7 +137,9 @@ def seed():
                     if (a, b) in BLOCKED or (b, a) in BLOCKED:
                         continue
                     weight = round(haversine_km(*coords[a], *coords[b]), 3)
-                    db.add(RoadEdge(from_node_id=a, to_node_id=b, weight=weight))
+                    factor = CONGESTION.get((a, b), CONGESTION.get((b, a), 1.0))
+                    db.add(RoadEdge(from_node_id=a, to_node_id=b, weight=weight,
+                                    traffic_factor=factor))
                     edge_count += 1
 
         # --- hospitals and ambulances ---
@@ -146,7 +162,8 @@ def seed():
 
         # --- report ---
         print(f"Seeded {len(coords)} road nodes, {edge_count} road edges "
-              f"({len(BLOCKED)} crossings deliberately missing),")
+              f"({len(BLOCKED)} crossings deliberately missing, "
+              f"{len(CONGESTION)} congested),")
         print(f"       {len(HOSPITALS)} hospitals, {len(AMBULANCES)} ambulances.")
         print()
         print("Hospital -> nearest road node (this is what snapping will pick):")

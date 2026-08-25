@@ -6,6 +6,7 @@ from dsa.graph import Graph
 from dsa.dijkstra import dijkstra
 from dsa.astar import astar, heuristic
 from dsa.geo import haversine_km
+from dsa.traffic import travel_time_minutes, optimistic_time_minutes
 
 
 # Real coordinates, and edge weights DERIVED from those coordinates.
@@ -30,10 +31,20 @@ COORDS = {
 EDGES = [("A", "C"), ("A", "E"), ("C", "B"), ("E", "B"), ("B", "D"), ("C", "D")]
 
 
-def make_graph_and_coords():
+def make_graph_and_coords(congestion=None):
+    """Build the test graph with edges weighted in TRAVEL TIME (minutes).
+
+    v1.7 moved the whole system from distance weights to time weights, so the
+    tests weight their edges the same way. If they stayed in kilometres while
+    the heuristic returned minutes, the units would disagree again and the
+    admissibility test below would rightly fail.
+    """
+    congestion = congestion or {}
     g = Graph()
     for u, v in EDGES:
-        g.add_edge(u, v, haversine_km(*COORDS[u], *COORDS[v]))
+        km = haversine_km(*COORDS[u], *COORDS[v])
+        factor = congestion.get((u, v), congestion.get((v, u), 1.0))
+        g.add_edge(u, v, travel_time_minutes(km, factor))
     return g, COORDS
 
 
@@ -43,8 +54,8 @@ def test_astar_matches_dijkstra_distance():
     d_path, d_dist = dijkstra(g, "A", "D")
     a_path, a_dist = astar(g, "A", "D", coords)
 
-    print(f"Test 1 - Dijkstra: {d_path} {d_dist:.3f} km")
-    print(f"         A*:       {a_path} {a_dist:.3f} km")
+    print(f"Test 1 - Dijkstra: {d_path} {d_dist:.3f} min")
+    print(f"         A*:       {a_path} {a_dist:.3f} min")
 
     assert abs(d_dist - a_dist) < 1e-9, f"Distance mismatch: {d_dist} vs {a_dist}"
 
@@ -82,7 +93,7 @@ def test_heuristic_is_admissible():
     for node in g.adj:
         _, true_cost = dijkstra(g, node, "D")
         h = heuristic(coords, node, "D")
-        print(f"           {node}: h={h:.3f} km  true={true_cost:.3f} km")
+        print(f"           {node}: h={h:.3f} min  true={true_cost:.3f} min")
         assert h <= true_cost + 1e-9, (
             f"INADMISSIBLE at {node}: heuristic {h} > true cost {true_cost}"
         )
@@ -93,7 +104,7 @@ def test_heuristic_is_in_same_unit_as_weights():
 
     A heuristic that is orders of magnitude smaller than a single edge weight
     contributes nothing, and A* silently degenerates into Dijkstra. Here they
-    must be comparable.
+    must be comparable, and both are now in minutes.
     """
     g, coords = make_graph_and_coords()
     weights = [w for node in g.adj for _, w in g.get_neighbors(node)]
@@ -101,11 +112,43 @@ def test_heuristic_is_in_same_unit_as_weights():
     h = heuristic(coords, "A", "D")
 
     ratio = h / avg_weight
-    print(f"Test 5 - Units: h(A->D)={h:.3f} km, avg edge={avg_weight:.3f} km, "
+    print(f"Test 5 - Units: h(A->D)={h:.3f} min, avg edge={avg_weight:.3f} min, "
           f"ratio={ratio:.2f}")
     assert 0.1 < ratio < 10, (
         f"Heuristic and edge weights look like different units (ratio {ratio})"
     )
+
+
+def test_congestion_changes_the_chosen_route():
+    """The reason the traffic model exists.
+
+    With every road clear, the shortest path is taken. Congest that path
+    heavily and the router must pick a physically longer but faster one. If
+    this test fails, traffic is only affecting the ETA, not the routing.
+    """
+    clear_graph, coords = make_graph_and_coords()
+    clear_path, clear_time = dijkstra(clear_graph, "A", "D")
+
+    # Gridlock every road on the route that was just chosen.
+    jam = {}
+    for u, v in zip(clear_path, clear_path[1:]):
+        jam[(u, v)] = 4.0
+    jammed_graph, _ = make_graph_and_coords(jam)
+    jammed_path, jammed_time = dijkstra(jammed_graph, "A", "D")
+
+    print(f"Test 7 - Clear: {clear_path} in {clear_time:.1f} min")
+    print(f"         Jammed: {jammed_path} in {jammed_time:.1f} min")
+    assert jammed_path != clear_path, "Congestion did not change the route"
+
+
+def test_astar_still_matches_dijkstra_under_congestion():
+    """Admissibility must hold with traffic applied, not just on clear roads."""
+    jam = {("A", "C"): 3.5, ("C", "D"): 2.0}
+    g, coords = make_graph_and_coords(jam)
+    _, d_time = dijkstra(g, "A", "D")
+    _, a_time = astar(g, "A", "D", coords)
+    print(f"Test 8 - Congested: dijkstra {d_time:.3f} min, astar {a_time:.3f} min")
+    assert abs(d_time - a_time) < 1e-9
 
 
 def test_astar_expands_no_more_nodes_than_dijkstra():
@@ -128,4 +171,6 @@ if __name__ == "__main__":
     test_heuristic_is_admissible()
     test_heuristic_is_in_same_unit_as_weights()
     test_astar_expands_no_more_nodes_than_dijkstra()
+    test_congestion_changes_the_chosen_route()
+    test_astar_still_matches_dijkstra_under_congestion()
     print("\nAll A* tests passed.")

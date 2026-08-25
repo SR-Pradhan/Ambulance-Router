@@ -5,11 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models.models import Hospital, Ambulance, EmergencyRequest
-from app.graph_loader import load_road_network
+from app.graph_loader import load_road_network, path_length_km
 from app.schemas.requests import EmergencyRequestCreate
 from app.dsa.dijkstra import dijkstra_all, reconstruct_path
 from app.dsa.geo import snap_to_node
-from app.dsa.heap_ranking import rank_hospitals, rank_by_distance
+from app.dsa.heap_ranking import (rank_hospitals, rank_by_distance,
+                                  CAPACITY_PENALTY_MINUTES)
 from app.dsa.priority_queue import PriorityQueue, triage_score
 from app.facilities import facility_list, hospital_has_facility, FACILITY_LABELS
 
@@ -40,8 +41,10 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
     # 2. The patient gave us a coordinate; Dijkstra needs a node.
     patient_node, patient_offset = snap_to_node(patient_lat, patient_lng, coords)
 
-    # 3. ONE Dijkstra run gives the distance to every node, and therefore to
-    #    every hospital. Running it once per hospital would repeat this work.
+    # 3. ONE Dijkstra run gives the travel TIME to every node, and therefore to
+    #    every hospital. Since v1.7 the graph is weighted in minutes, so these
+    #    are durations, not distances. Running it once per hospital would
+    #    repeat this work.
     distances, prev = dijkstra_all(graph, patient_node)
 
     # 4. Build the candidate list, measured by road distance.
@@ -59,9 +62,14 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
             continue
 
         h_node, h_offset = snap_to_node(h.latitude, h.longitude, coords)
-        road_km = distances.get(h_node, float('inf'))
-        if road_km == float('inf'):
+        minutes = distances.get(h_node, float('inf'))
+        if minutes == float('inf'):
             continue  # unreachable from the patient (e.g. disconnected road)
+
+        # Ranking happens on TIME; the kilometres are carried alongside purely
+        # so the answer can be explained to a human.
+        h_path = reconstruct_path(prev, patient_node, h_node)
+        road_km = path_length_km(h_path, coords)
 
         candidates.append({
             "id": h.id,
@@ -72,7 +80,8 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
             "total_beds": h.total_beds,
             "facilities": facility_list(h),
             "node_id": h_node,
-            "distance": round(road_km, 3),      # key the heap ranks on
+            "distance": round(road_km, 3),          # physical km, for display
+            "travel_minutes": round(minutes, 2),    # the key the heap ranks on
             "distance_type": "road",
         })
 
@@ -87,12 +96,17 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
 
     # 5. The heap picks the winner. rank_hospitals doesn't know or care that
     #    "distance" is now road distance rather than straight-line.
-    ranked = rank_hospitals(candidates, top_k=len(candidates))
+    ranked = rank_hospitals(candidates, top_k=len(candidates),
+                            capacity_penalty_km=CAPACITY_PENALTY_MINUTES,
+                            cost_key="travel_minutes")
     best = ranked[0]
 
     # 6. The actual route to the winner, and how long it should take.
     path = reconstruct_path(prev, patient_node, best["node_id"])
-    eta_minutes = round(best["distance"] / AVG_AMBULANCE_SPEED_KMH * 60, 1)
+    # The ETA is the routed travel time itself. Before v1.7 it was derived from
+    # distance and a flat assumed speed; now traffic is already baked into the
+    # edge weights, so the number the router produced IS the estimate.
+    eta_minutes = round(best["travel_minutes"], 1)
 
     # 7. Nearest AVAILABLE ambulance to the patient.
     #    We reuse the very same `distances` map computed above. That works
@@ -104,27 +118,30 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
         if a.status != "available":
             continue
         a_node, _ = snap_to_node(a.current_lat, a.current_lng, coords)
-        pickup_km = distances.get(a_node, float('inf'))
-        if pickup_km == float('inf'):
+        pickup_minutes = distances.get(a_node, float('inf'))
+        if pickup_minutes == float('inf'):
             continue
+        a_path = reconstruct_path(prev, patient_node, a_node)
         ambulance_candidates.append({
             "id": a.id,
             "current_lat": a.current_lat,
             "current_lng": a.current_lng,
             "node_id": a_node,
-            "distance": round(pickup_km, 3),
+            "distance": round(path_length_km(a_path, coords), 3),
+            "travel_minutes": round(pickup_minutes, 2),
         })
 
-    nearest = rank_by_distance(ambulance_candidates, top_k=1)
+    # Nearest by TIME, not by distance: a closer ambulance stuck behind traffic
+    # is not the one that arrives first.
+    nearest = rank_by_distance(ambulance_candidates, top_k=1,
+                               key="travel_minutes")
     ambulance = nearest[0] if nearest else None
 
     if ambulance is not None:
         ambulance["pickup_path"] = reconstruct_path(
             prev, patient_node, ambulance["node_id"]
         )
-        ambulance["pickup_eta_minutes"] = round(
-            ambulance["distance"] / AVG_AMBULANCE_SPEED_KMH * 60, 1
-        )
+        ambulance["pickup_eta_minutes"] = round(ambulance["travel_minutes"], 1)
 
     return {
         "patient": {
@@ -138,7 +155,7 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
             "path": path,
             "distance_km": best["distance"],
             "eta_minutes": eta_minutes,
-            "assumed_speed_kmh": AVG_AMBULANCE_SPEED_KMH,
+            "traffic_aware": True,
         },
         "ambulance": ambulance,
         "total_eta_minutes": (

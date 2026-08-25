@@ -1,10 +1,11 @@
 import heapq
 
 from .geo import haversine_km
+from .traffic import optimistic_time_minutes
 
 
 def heuristic(node_coords, a, b):
-    """Estimated remaining cost from node a to node b, in KILOMETRES.
+    """Estimated remaining cost from node a to node b, in MINUTES.
 
     This MUST be in the same unit as the graph's edge weights. That is the
     whole game with A*: the priority is f = g + h, where g is real accumulated
@@ -14,9 +15,9 @@ def heuristic(node_coords, a, b):
     returning shortest paths at all).
 
     Straight-line distance is the classic ADMISSIBLE heuristic: no road between
-    two points can be shorter than the straight line between them, so this
-    never overestimates, which is exactly the condition A* needs to stay
-    optimal.
+    two points can be shorter than the straight line between them. Converted at
+    the free flow speed, it is also the shortest conceivable TIME, so it never
+    overestimates, which is exactly the condition A* needs to stay optimal.
 
     Note this file imports from geo.py using a RELATIVE import (`.geo`). That
     matters: the app runs it as `app.dsa.astar` while the tests run it as
@@ -26,7 +27,15 @@ def heuristic(node_coords, a, b):
     """
     a_lat, a_lng = node_coords[a]
     b_lat, b_lng = node_coords[b]
-    return haversine_km(a_lat, a_lng, b_lat, b_lng)
+    straight_line_km = haversine_km(a_lat, a_lng, b_lat, b_lng)
+
+    # Edge weights are travel time in minutes, so the heuristic must be too.
+    # It converts using the FREE FLOW speed, the fastest any road could
+    # possibly be driven, which makes this the most optimistic time achievable
+    # and therefore a genuine lower bound. Using an average speed here would
+    # overestimate on clear roads, break admissibility, and let A* return a
+    # route that is not actually the fastest.
+    return optimistic_time_minutes(straight_line_km)
 
 
 def astar(graph, source, dest, node_coords, stats=None):

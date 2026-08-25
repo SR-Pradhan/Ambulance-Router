@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models.models import Ambulance, Hospital, EmergencyRequest
-from app.graph_loader import load_road_network, path_to_coords
+from app.graph_loader import load_road_network, path_to_coords, path_length_km
 from app.dsa.dijkstra import dijkstra
 from app.dsa.geo import snap_to_node, position_along_path
 
@@ -39,11 +39,18 @@ def _journey_coords(db, graph, coords, request, ambulance, hospital):
     p_node, _ = snap_to_node(request.patient_lat, request.patient_lng, coords)
     h_node, _ = snap_to_node(hospital.latitude, hospital.longitude, coords)
 
-    pickup_path, pickup_km = dijkstra(graph, a_node, p_node)
-    transport_path, transport_km = dijkstra(graph, p_node, h_node)
+    # dijkstra returns MINUTES since v1.7, so the physical distances have to be
+    # measured from the path itself. Position interpolation works in kilometres
+    # (it walks real coordinates), so mixing the two up would put ambulances in
+    # the wrong place entirely.
+    pickup_path, _pickup_minutes = dijkstra(graph, a_node, p_node)
+    transport_path, _transport_minutes = dijkstra(graph, p_node, h_node)
 
     if pickup_path is None or transport_path is None:
         return None, 0.0, 0.0
+
+    pickup_km = path_length_km(pickup_path, coords)
+    transport_km = path_length_km(transport_path, coords)
 
     pickup_coords = path_to_coords(pickup_path, coords)
     transport_coords = path_to_coords(transport_path, coords)

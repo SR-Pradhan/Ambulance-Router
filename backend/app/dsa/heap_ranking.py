@@ -14,6 +14,11 @@ import heapq
 # past a near hospital to reach an emptier one.
 CAPACITY_PENALTY_KM = 2.0
 
+# The same idea expressed in minutes, for callers ranking on travel TIME rather
+# than distance (which is everything since v1.7 put traffic in the weights).
+# A hospital with no spare capacity is ranked as if it were 3 minutes further.
+CAPACITY_PENALTY_MINUTES = 3.0
+
 
 def hospital_score(distance_km, available_beds, total_beds,
                    capacity_penalty_km=CAPACITY_PENALTY_KM):
@@ -35,7 +40,8 @@ def hospital_score(distance_km, available_beds, total_beds,
     return distance_km + capacity_penalty_km * (1.0 - free_fraction)
 
 
-def rank_hospitals(hospitals, top_k=3, capacity_penalty_km=CAPACITY_PENALTY_KM):
+def rank_hospitals(hospitals, top_k=3, capacity_penalty_km=CAPACITY_PENALTY_KM,
+                   cost_key="distance"):
     """Rank hospitals by distance AND availability, nearest-and-emptiest first.
 
     hospitals: dicts with "distance", "available_beds", "name", and ideally
@@ -49,7 +55,10 @@ def rank_hospitals(hospitals, top_k=3, capacity_penalty_km=CAPACITY_PENALTY_KM):
     for h in hospitals:
         if h["available_beds"] <= 0:
             continue
-        score = hospital_score(h["distance"], h["available_beds"],
+        # cost_key lets the caller choose the unit being ranked on: "distance"
+        # in km, or "travel_minutes" once traffic is in play. The penalty must
+        # be given in the SAME unit, which is why it is a parameter too.
+        score = hospital_score(h[cost_key], h["available_beds"],
                                h.get("total_beds"), capacity_penalty_km)
         # Keep the score on the dict so the API can show why this hospital won.
         h["score"] = round(score, 3)
@@ -61,7 +70,7 @@ def rank_hospitals(hospitals, top_k=3, capacity_penalty_km=CAPACITY_PENALTY_KM):
         result.append(h)
     return result
 
-def rank_by_distance(items, top_k=1):
+def rank_by_distance(items, top_k=1, key="distance"):
     """Return the top_k items with the smallest "distance", nearest first.
 
     A generic sibling of rank_hospitals() above: no beds, no domain rules, just
@@ -77,4 +86,4 @@ def rank_by_distance(items, top_k=1):
     """
     if not items:
         return []
-    return heapq.nsmallest(top_k, items, key=lambda x: x["distance"])
+    return heapq.nsmallest(top_k, items, key=lambda x: x[key])

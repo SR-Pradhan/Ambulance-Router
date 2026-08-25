@@ -39,8 +39,8 @@ export default function ResultsPanel({ result }) {
           <span className="label">Hospital</span>
           <strong>{hospital.name}</strong>
           <span className="sub">
-            {hospital.distance} km by road, {hospital.available_beds} of{" "}
-            {hospital.total_beds} beds free
+            {hospital.travel_minutes} min in current traffic, {hospital.distance} km
+            by road, {hospital.available_beds} of {hospital.total_beds} beds free
           </span>
         </div>
         <div>
@@ -68,8 +68,8 @@ export default function ResultsPanel({ result }) {
           <dd>{route.distance_km} km</dd>
         </div>
         <div>
-          <dt>Assumed speed</dt>
-          <dd>{route.assumed_speed_kmh} km/h</dd>
+          <dt>Travel time</dt>
+          <dd>{route.eta_minutes} min including traffic</dd>
         </div>
         {result.required_facility && (
           <div>
@@ -108,6 +108,7 @@ export default function ResultsPanel({ result }) {
               <thead>
                 <tr>
                   <th>Hospital</th>
+                  <th className="numeric">Minutes</th>
                   <th className="numeric">Road km</th>
                   <th className="numeric">Beds</th>
                   <th className="numeric">Score</th>
@@ -117,6 +118,7 @@ export default function ResultsPanel({ result }) {
                 {alternatives.map((a) => (
                   <tr key={a.id}>
                     <td>{a.name}</td>
+                    <td className="numeric">{a.travel_minutes}</td>
                     <td className="numeric">{a.distance}</td>
                     <td className="numeric">
                       {a.available_beds} of {a.total_beds}
@@ -128,10 +130,11 @@ export default function ResultsPanel({ result }) {
             </table>
           </div>
           <p className="note">
-            The score combines road distance with how full the hospital is, both
-            measured in kilometres. A hospital with no spare capacity is ranked as
-            if it were up to 2 km further away. Hospitals with zero free beds are
-            excluded before ranking, so they never appear here.
+            The score combines travel time with how full the hospital is, both
+            measured in minutes. A hospital with no spare capacity is ranked as if
+            it were up to 3 minutes further away. Travel time includes traffic, so
+            a nearer hospital can rank lower than a further one on a clear road.
+            Hospitals with zero free beds are excluded before ranking.
           </p>
         </>
       )}
