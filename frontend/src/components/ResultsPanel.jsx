@@ -39,7 +39,8 @@ export default function ResultsPanel({ result }) {
           <span className="label">Hospital</span>
           <strong>{hospital.name}</strong>
           <span className="sub">
-            {hospital.distance} km by road, {hospital.available_beds} beds free
+            {hospital.distance} km by road, {hospital.available_beds} of{" "}
+            {hospital.total_beds} beds free
           </span>
         </div>
         <div>
@@ -95,6 +96,7 @@ export default function ResultsPanel({ result }) {
                   <th>Hospital</th>
                   <th className="numeric">Road km</th>
                   <th className="numeric">Beds</th>
+                  <th className="numeric">Score</th>
                 </tr>
               </thead>
               <tbody>
@@ -102,15 +104,20 @@ export default function ResultsPanel({ result }) {
                   <tr key={a.id}>
                     <td>{a.name}</td>
                     <td className="numeric">{a.distance}</td>
-                    <td className="numeric">{a.available_beds}</td>
+                    <td className="numeric">
+                      {a.available_beds} of {a.total_beds}
+                    </td>
+                    <td className="numeric">{a.score}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <p className="note">
-            Hospitals with no free beds are excluded before ranking, so they never
-            appear here.
+            The score combines road distance with how full the hospital is, both
+            measured in kilometres. A hospital with no spare capacity is ranked as
+            if it were up to 2 km further away. Hospitals with zero free beds are
+            excluded before ranking, so they never appear here.
           </p>
         </>
       )}
