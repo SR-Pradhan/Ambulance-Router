@@ -1,0 +1,14 @@
+# Backend dependencies for the Ambulance Route Optimizer.
+# Versions pinned to what is verified working, so the project still runs later.
+#
+# Install:  pip install -r requirements.txt
+#
+# Note: the DSA engine in app/dsa/ deliberately uses only the Python standard
+# library (math, heapq). Dijkstra, A* and the heap ranking are hand-written --
+# no networkx or any other graph library, by design.
+
+fastapi==0.141.1
+uvicorn==0.52.4
+SQLAlchemy==2.0.39
+psycopg2-binary==2.9.12
+pydantic==2.10.3
