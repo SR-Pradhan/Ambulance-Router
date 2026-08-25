@@ -18,10 +18,10 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
   const [severity, setSeverity] = useState("standard");
   const [facility, setFacility] = useState("");
 
-  // The seeded road grid spans 28.44 to 28.50 lat and 77.00 to 77.06 lng.
-  // Outside that the nearest road node is far away and the route looks
-  // nonsensical, so this gives a known good starting point.
-  const usePreset = () => onPickPatient(28.44, 77.0);
+  // The real road network covers part of Gurugram: roughly 28.43 to 28.51 lat
+  // and 76.99 to 77.07 lng. Outside that the nearest junction is far away and
+  // the route looks nonsensical, so this drops the patient near the centre.
+  const usePreset = () => onPickPatient(28.47, 77.03);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -52,7 +52,7 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
           <input
             type="number"
             step="0.0001"
-            placeholder="28.4400"
+            placeholder="28.4700"
             value={patient?.lat ?? ""}
             onChange={(e) =>
               onPickPatient(parseFloat(e.target.value), patient?.lng ?? 77.0)
@@ -64,7 +64,7 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
           <input
             type="number"
             step="0.0001"
-            placeholder="77.0000"
+            placeholder="77.0300"
             value={patient?.lng ?? ""}
             onChange={(e) =>
               onPickPatient(patient?.lat ?? 28.44, parseFloat(e.target.value))

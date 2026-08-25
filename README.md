@@ -16,8 +16,8 @@ then dispatches the nearest available ambulance and tracks it on a live map.
 - **The routing algorithms are hand-written.** Dijkstra, A\* and the min-heap
   ranking are implemented from scratch — no `networkx`, no shortest-path library.
 - **A\* is measurably faster, and provably correct.** `/route?algo=compare` runs
-  both and reports node expansions: 15 for Dijkstra vs 9 for A\* on the seeded
-  grid, same distance.
+  both and reports node expansions: on the real 433-junction network Dijkstra
+  expands 379 nodes and A\* expands 286, for the same route.
 - **Ranking on road distance changes the answer.** Straight-line distance picks
   City Hospital (3.068 km); routing through the actual road network shows
   Sunrise Medical is genuinely closer (3.912 km vs 4.179 km by road).
@@ -54,12 +54,14 @@ cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-python seed_data.py                # creates the tables AND seeds demo data
+python seed_data.py                # creates the tables AND seeds real OSM data
 uvicorn app.main:app --reload --port 8001
 ```
 
-`seed_data.py` creates any missing tables from the SQLAlchemy models before
-seeding, so an empty database is all it needs. It is **destructive and
+`seed_data.py` creates any missing tables from the SQLAlchemy models, then seeds
+the **real Gurugram road network** from cached OpenStreetMap data in
+`backend/data/` (540 KB, committed, so no internet is needed). Add
+`--synthetic` to rebuild the original 4x4 invented grid instead. It is **destructive and
 idempotent**: it truncates every table and rebuilds, so running it twice gives
 the same result — including wiping any emergency requests made through the API.
 
@@ -89,7 +91,10 @@ python tests/test_dijkstra.py      # 9
 python tests/test_astar.py         # 6
 python tests/test_heap_ranking.py  # 10
 python tests/test_geo.py           # 14
-python tests/test_priority_queue.py # 12  -> 51 total
+python tests/test_priority_queue.py # 12
+python tests/test_facilities.py     # 6
+python tests/test_traffic.py        # 9
+python tests/test_osm.py            # 8   -> 82 total
 ```
 
 The algorithm tests use hand-built graphs and need no database or server —
@@ -126,8 +131,11 @@ backend/
     models/     SQLAlchemy ORM models
     schemas/    Pydantic request/response validation
     graph_loader.py   Shared road-network loading
-  tests/        51 algorithm tests
-  seed_data.py  Creates the schema + rebuilds the simulated road network
+  tests/        82 algorithm tests
+  osm.py        Pure OSM parsing and graph simplification
+  osm_seed.py   Overpass fetch, caching, hospital selection
+  data/         Cached OpenStreetMap responses (540 KB)
+  seed_data.py  Creates the schema + seeds the real road network
 
 frontend/
   src/
@@ -149,12 +157,11 @@ survive swapping either one out.
 
 Stated deliberately rather than hidden:
 
-- **The road network is synthetic, but the map tiles are real.** The 16 nodes sit
-  on a perfect 0.02° lattice over Gurugram, so every "road" is a ruler-straight
-  line between grid points and drawn routes visibly cross real buildings. The
-  algorithms are genuine and the answers are correct *for this simulated city* —
-  they are not navigable directions for the real one. Importing real
-  OpenStreetMap road data would fix this without changing any algorithm.
+- **Roads and hospital names are real; capacity and traffic are not.** The road
+  network (433 junctions, 643 segments) and the 12 hospital names and positions
+  come from OpenStreetMap. Bed counts, specialist units, congestion figures and
+  ambulance positions are invented, because OSM does not carry them. Routes and
+  distances are genuine; nothing about capacity or traffic is a measurement.
 - ETA assumes a constant 40 km/h with no traffic model.
 - Live positions are interpolated from elapsed time, not GPS.
 - Ambulance dispatch has no locking; concurrent requests could race.

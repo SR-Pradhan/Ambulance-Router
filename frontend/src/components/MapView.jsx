@@ -100,8 +100,8 @@ function ClickToSetPatient({ onPick }) {
 }
 
 export default function MapView({ hospitals, live, patient, onPickPatient }) {
-  // Centre of the seeded 4x4 road grid.
-  const center = [28.47, 77.03];
+  // Centre of the real road network (part of Gurugram).
+  const center = [28.4632, 77.035];
 
   return (
     <div className="map-wrap">

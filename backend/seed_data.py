@@ -102,7 +102,9 @@ def create_tables():
     print(f"Schema ready: {', '.join(sorted(Base.metadata.tables))}")
 
 
-def seed():
+def seed_synthetic():
+    """The original 4x4 invented grid. Kept as an offline, deterministic
+    fallback and because its congested corridor is a clean teaching example."""
     create_tables()
     db = SessionLocal()
     try:
@@ -180,5 +182,68 @@ def seed():
         db.close()
 
 
+def seed_osm():
+    """Seed from real OpenStreetMap data: real roads, real hospital names."""
+    import osm_seed
+
+    create_tables()
+    print("Building the road network from OpenStreetMap...")
+    coords, edges = osm_seed.build_network()
+    hospitals = osm_seed.select_hospitals(osm_seed.fetch_hospitals(), coords)
+    ambulances = osm_seed.select_ambulances(coords)
+
+    db = SessionLocal()
+    try:
+        db.execute(text(
+            "TRUNCATE road_edges, road_nodes, hospitals, ambulances, "
+            "emergency_requests RESTART IDENTITY CASCADE"
+        ))
+        db.commit()
+
+        for node_id, (lat, lng) in coords.items():
+            db.add(RoadNode(id=node_id, lat=lat, lng=lng))
+        db.flush()
+
+        for a, b, km, factor in edges:
+            db.add(RoadEdge(from_node_id=a, to_node_id=b, weight=km,
+                            traffic_factor=factor))
+
+        for h in hospitals:
+            db.add(Hospital(**h))
+        for a in ambulances:
+            db.add(Ambulance(**a))
+        db.commit()
+
+        db.execute(text(
+            "SELECT setval('road_nodes_id_seq', (SELECT MAX(id) FROM road_nodes))"
+        ))
+        db.commit()
+
+        print(f"Seeded {len(coords)} real road junctions, {len(edges)} road "
+              f"segments,")
+        print(f"       {len(hospitals)} real hospitals, {len(ambulances)} ambulances.")
+        print()
+        print("Hospitals (names and positions are REAL; beds and units are invented):")
+        for h in hospitals:
+            units = ", ".join(u for u, has in (
+                ("icu", h["has_icu"]), ("trauma", h["has_trauma_unit"]),
+                ("cardiac", h["has_cardiac_unit"])) if has) or "none"
+            print(f"  {h['name'][:34]:36s} beds {h['available_beds']:3d}/"
+                  f"{h['total_beds']:<3d} units: {units}")
+    finally:
+        db.close()
+
+
+def seed(use_osm=True):
+    if use_osm:
+        seed_osm()
+    else:
+        seed_synthetic()
+
+
 if __name__ == "__main__":
-    seed()
+    import sys
+    synthetic = "--synthetic" in sys.argv
+    if synthetic:
+        print("Seeding the SYNTHETIC 4x4 grid (--synthetic).")
+    seed(use_osm=not synthetic)

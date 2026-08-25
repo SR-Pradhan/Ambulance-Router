@@ -1,0 +1,1048 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-08-25T19:24:06Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 414735815,
+  "lat": 28.4508125,
+  "lon": 77.0328448,
+  "tags": {
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Pushpanjali Hospital",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 6991277966,
+  "lat": 28.4772418,
+  "lon": 77.0164105,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "1031/-, Railway Road, Near Mata Chintapurni Mandir",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Sarvodya Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6991277967,
+  "lat": 28.4686477,
+  "lon": 77.0382518,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "299/2 Old Delhi Road Near Telephone Exchange",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Saraswati Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6991278237,
+  "lat": 28.4733303,
+  "lon": 77.0032650,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "B-62, Surya Vihar, Near Police Chowki Sector 4",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Shree Krishna Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6991290274,
+  "lat": 28.4618014,
+  "lon": 77.0274720,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "#47/5, Jacobpura,Near Arya Samaj Mandir",
+    "addr:housenumber": "47/5",
+    "addr:place": "Jacobpura",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Sharma Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6993917647,
+  "lat": 28.4571607,
+  "lon": 77.0143104,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Manadan Puri Road, Manadan Puri Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "healthcare:speciality": "maternity",
+    "name": "Navjeevan Hospital and Maternity Centre",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6993922158,
+  "lat": 28.4565865,
+  "lon": 77.0207731,
+  "tags": {
+    "addr:city": "Gurgaon",
+    "addr:district": "Gurgaon",
+    "addr:full": "301-302/4, Model Town, Basai Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "info@sethihospital.in",
+    "healthcare": "hospital",
+    "healthcare:speciality": "Orthopedic;Internal Medicine;Laparoscopic Surgery;Cardiology;Obstetrics and Gynaecology;Emergency and Critical Care;Pediatrics Neurosurgery;Gastroenterology",
+    "name": "Sethi Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "http://www.sethihospital.in/"
+  }
+},
+{
+  "type": "node",
+  "id": 6993931828,
+  "lat": 28.4568812,
+  "lon": 77.0222792,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Near Bhuteshwar Mandir,Basai Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "healthcare:speciality": "maternity",
+    "name": "Pasricha Hospital and Maternity Home",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6994059852,
+  "lat": 28.4559386,
+  "lon": 77.0374082,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Main Jharsa Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Dayal Eye & Maternity Centre",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6994092369,
+  "lat": 28.4567439,
+  "lon": 77.0210648,
+  "tags": {
+    "addr:city": "Gurgaon",
+    "addr:district": "Gurgaon",
+    "addr:full": "Basai Road, OppositeDharam Kanta",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Shubham Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6994099950,
+  "lat": 28.4678366,
+  "lon": 77.0422697,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Mehrauli Gurgaon Road, OppositeGovt Girls College, Near Sector - 14, Gurgaon",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "check_date": "2024-11-22",
+    "email": "info@kalyanihospital.com",
+    "healthcare": "hospital",
+    "healthcare:speciality": "multi specialit",
+    "name": "Kalyani Hospital, Gurgaon",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://www.kalyanihospital.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 6994541473,
+  "lat": 28.4644545,
+  "lon": 77.0187361,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "21 L New Colony, Near Our Lady Of Fatima School",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Chiranjiv Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997230529,
+  "lat": 28.4749937,
+  "lon": 77.0561126,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Pataudiroad, OppositeKadipurindustrialarea",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Sangwan Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997600243,
+  "lat": 28.4637750,
+  "lon": 77.0221880,
+  "tags": {
+    "addr:city": "Gurgaon",
+    "addr:district": "Gurgaon",
+    "addr:full": "207/13, Old Railway Road, Near Prem Mander Subash Nagar",
+    "addr:housenumber": "207/13",
+    "addr:place": "Subash Nagar",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "addr:street": "Old Railway Road",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Triveni Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997631317,
+  "lat": 28.4663216,
+  "lon": 77.0138611,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "113-A New Colony Near Geeta Bhawan",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Taneja Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997688587,
+  "lat": 28.4500967,
+  "lon": 77.0327827,
+  "tags": {
+    "addr:city": "Gurgaon",
+    "addr:district": "Gurgaon",
+    "addr:full": "John Hall Road Civil Lines",
+    "addr:place": "Civil Lines",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "addr:street": "John Hall Road",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Pushpanjali Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997700191,
+  "lat": 28.4822505,
+  "lon": 77.0214477,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "558, Sector-5",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Yashroop Medical Centre",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997700192,
+  "lat": 28.4953531,
+  "lon": 77.0114095,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "3236/31, Rajindera Park, Near Railway Station",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Chirag Hospital Pvt. Ltd",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997700220,
+  "lat": 28.4692855,
+  "lon": 77.0344470,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Mata Road, Near Roadways Workshop",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "info@lotushospital.org",
+    "healthcare:speciality": "Laparoscopic Surgery; Orthopedic; Internal Medicine Plastic Surgery; Gynaecology; Pediatrics; Pathology; Urology",
+    "name": "Lotus Hospital, Gurgaon",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://www.lotushospital.org/"
+  }
+},
+{
+  "type": "node",
+  "id": 6997700282,
+  "lat": 28.4701296,
+  "lon": 77.0226856,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "94-95, Link Road, Bhim Nagar Chowk, Opposite Dronacharya Mandir , Near New Railway Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Sparsh Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997700322,
+  "lat": 28.4539854,
+  "lon": 77.0139308,
+  "tags": {
+    "addr:city": "Gurgaon",
+    "addr:district": "Gurgaon",
+    "addr:full": "1-A/22, Laxmi Garden, Pataudi Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Mangalam Hospital and Heart Centre",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997714626,
+  "lat": 28.4574704,
+  "lon": 77.0536983,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Sector - 30 Jal Vayu Vihar",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Shivam Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997714637,
+  "lat": 28.4624763,
+  "lon": 77.0276631,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "14/5 Jacobpura, Near Arya Samaj Mandir",
+    "addr:housenumber": "14/5",
+    "addr:place": "Jacobpura",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "rajiveyeworld@yahoo.com",
+    "healthcare": "hospital",
+    "healthcare:speciality": "ophthalmology",
+    "name": "Rajiv Memorial Eye Infirmary, Jacobpura",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://rajiveye.tripod.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 6997832575,
+  "lat": 28.4823666,
+  "lon": 77.0141546,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Ashok Vihar, Gurgaon",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Sneh Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6997916397,
+  "lat": 28.4695590,
+  "lon": 77.0195045,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Old Railway Road, Gurgaon",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "support@aryanhospital.in",
+    "healthcare:speciality": "ENT; Gastroenterology; Gynaecology; Maxillofacial and Oral surgery; Orthopedic; Plastic and Cosmetic Surgery Spine Surgery; Surgical Oncology; Urology",
+    "name": "Aryan Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://aryanhospital.in/"
+  }
+},
+{
+  "type": "node",
+  "id": 6997941837,
+  "lat": 28.4567256,
+  "lon": 77.0230785,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Khandsa Road, G",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Rama Hospital & Nursing Home",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6998006337,
+  "lat": 28.4771569,
+  "lon": 77.0158929,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Sector-4, Railway Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Jain Sant Phool Chand Ji Charitable Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6998114433,
+  "lat": 28.4534132,
+  "lon": 77.0199907,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "19/8, Model Town, Opp SD School, Khandsa Road, Gurgaon",
+    "addr:postcode": "122002",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "Kathuria.hospital@yahoo.com",
+    "healthcare": "hospital",
+    "healthcare:speciality": "Endoscopic procedure; Neuro surgery; Paediatric; Plastic surgery; Laparoscopic surgery; Endoscopic and urology surgery Gyne; Skin; V.D.Ortho; Dental",
+    "name": "Kathuria Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "http://www.kathuriahospital.com/index.html"
+  }
+},
+{
+  "type": "node",
+  "id": 7000653109,
+  "lat": 28.4570850,
+  "lon": 77.0201597,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "166/20, Basai Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Tirath Ram Hospitals Pvt Ltd",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7001015603,
+  "lat": 28.4667802,
+  "lon": 77.0273070,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "3654, New Railway Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "ashishlall@rediffmail.com",
+    "healthcare:speciality": "Medicine; Pediatrics; ENT; Gynaecology; Surgery; Orthopedics; Skin; Psychiatry Eye",
+    "name": "Lall Nursing and Maternity Home",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://www.lallhospital.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 7001218513,
+  "lat": 28.4682869,
+  "lon": 77.0260289,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Plot 399/1, New railway road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "infogurgaon1@centreforsight.net",
+    "healthcare:speciality": "Neuro Ophthalmology; Pediatric Ophthalmology ; Ophthalmology",
+    "name": "Centre For Sight, Gurgaon, New Railway Road",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://www.centreforsight.net/"
+  }
+},
+{
+  "type": "node",
+  "id": 7001301856,
+  "lat": 28.4609572,
+  "lon": 77.0180051,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "173/27. Near Hanuman Mandir, Gali No.3 Madanpuri",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Satyam Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7002913046,
+  "lat": 28.4639141,
+  "lon": 77.0305404,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "560/1, Dayanand Colony, New Railway Road, Gurgaon",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "info@aedi.in",
+    "healthcare:speciality": "Eye Care; Dental Care",
+    "name": "Ahooja Eye and Dental Institute Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://aedi.in/"
+  }
+},
+{
+  "type": "node",
+  "id": 7002917150,
+  "lat": 28.4667015,
+  "lon": 77.0272123,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "New Railway Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "ashishlall@rediffmail.com",
+    "healthcare:speciality": "Eye care",
+    "name": "Lall Eye Care Centre",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://www.lallhospital.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 7002943647,
+  "lat": 28.4652069,
+  "lon": 77.0280714,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Jacobpura",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Verma E.N.T. Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7002954086,
+  "lat": 28.4644246,
+  "lon": 77.0268832,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Near Income Tax Office Jacobpura,Sector-12A",
+    "addr:postcode": "122006",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Gupta Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7002991292,
+  "lat": 28.4691487,
+  "lon": 77.0286816,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "14-A,Mianwali Colony New Railway Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Jackson Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7002997882,
+  "lat": 28.4786458,
+  "lon": 77.0474356,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Sco 1 & 2 Sector-14",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Apollo Cradle Hospital,Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7003011058,
+  "lat": 28.4930865,
+  "lon": 77.0088346,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "A-86, 45, Feet Road, Rajendra Park",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "R K Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7007695184,
+  "lat": 28.4675082,
+  "lon": 77.0277380,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "50-B & 77-C, Mianwali Colony, New Railway Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "M Goel Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7008020087,
+  "lat": 28.4428341,
+  "lon": 77.0106183,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Khandsa Road, Near Sector 10A",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "sunrisehospital2009@yahoo.in",
+    "healthcare": "hospital",
+    "healthcare:speciality": "Obstetrics and Gynaecology;Pediatrics Chest and Respiratory Medicine;Orthopedic General Surgery;Internal Medicine ENT;EYE;Neuro Sciences;Dental",
+    "name": "Sunrise Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "http://www.sunrisehospital.net.in/"
+  }
+},
+{
+  "type": "node",
+  "id": 7008078166,
+  "lat": 28.4495431,
+  "lon": 77.0211279,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "554+1/21, Om Nagar, Near 35 Mile Stone, N. H. 8, Rajnagar Chowk",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Rajendra Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7008343539,
+  "lat": 28.4763789,
+  "lon": 77.0350291,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Near Chander Dairy,New Mata Road,Rajeev Nagar",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Jeevan Jyoti Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7008475347,
+  "lat": 28.4432185,
+  "lon": 77.0031618,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "C-1, Opp Meenakshi Public School, Sector-1 A",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Yadav Hospital, Gurgoan",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7008691154,
+  "lat": 28.4558195,
+  "lon": 77.0218735,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "118, Model Town, Khandsa Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "healthcare:speciality": "otolaryngology;maternity",
+    "name": "Nangia Hospital Ent and Maternity",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7008960818,
+  "lat": 28.4543386,
+  "lon": 77.0214859,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Khandsa Road, Near State Bank Of India",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Vinayak Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7009892483,
+  "lat": 28.4580332,
+  "lon": 77.0412478,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Sec 15Ii, Near Rail Vihar",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Ahmed Hospital Multi Speciality",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7010125928,
+  "lat": 28.4573930,
+  "lon": 77.0300911,
+  "tags": {
+    "addr:city": "Gurgaon",
+    "addr:district": "Gurgaon",
+    "addr:full": "530/18, Opp. Nehru Stadium, Civil Lines",
+    "addr:housenumber": "530/18",
+    "addr:place": "Civil Lines",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "email": "info@aarvyhospital.com",
+    "healthcare": "hospital",
+    "healthcare:speciality": "General Medicine;Pediatrics;Ophthalmology;Dental;Obstetrics and Gynaecology Orthopedics;",
+    "name": "Aarvy Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "https://aarvyhospital.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 7010444201,
+  "lat": 28.4697240,
+  "lon": 77.0338102,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "877/2, Mata Road, Opposite Homeguard, Office, Near Roadwoffice, Near Ays Workshop",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Mamta Hospital, Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7010444206,
+  "lat": 28.4640593,
+  "lon": 77.0218559,
+  "tags": {
+    "addr:city": "Gurgaon",
+    "addr:district": "Gurgaon",
+    "addr:full": "Subhash Nagar , Dhobi Ghat Old Railway Road",
+    "addr:place": "Subhash Nagar",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "addr:street": "Old Railway Road",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "M.S Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7010591317,
+  "lat": 28.4901894,
+  "lon": 77.0068324,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "Plot No - E / 1, Near Sunday MarketMain Bajgerah Road, Rajendra Park, Gurgaon",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare:speciality": "Ent;; General Surgery Gynaecology; Obesity; Oral Surgery; Pain Management; Pediatric Surgery; Plastic Surgery and Cosmetic Surgery; Reconstructive Surgery",
+    "name": "Bhardwaj Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData",
+    "website": "http://www.bhardwajhospital.net/"
+  }
+},
+{
+  "type": "node",
+  "id": 7010842699,
+  "lat": 28.4539324,
+  "lon": 77.0204298,
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "14/8,Model Town,Khandsa Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Parashar Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7168803799,
+  "lat": 28.4742460,
+  "lon": 77.0271170,
+  "tags": {
+    "addr:full": "Gurgaon Village, Sector 6, Gurgaon Rural",
+    "addr:postcode": "122006",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "description": "District Hospital",
+    "name": "GH Gurgaon",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7168803920,
+  "lat": 28.4681022,
+  "lon": 77.0013592,
+  "tags": {
+    "addr:full": "Block C, Sector 9A, Gurugram",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Esic Hospital, Gurugram",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 7622826291,
+  "lat": 28.4750562,
+  "lon": 77.0348668,
+  "tags": {
+    "addr:district": "Gurugram",
+    "addr:full": "West Rajiv Nagar, Sector 12",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "name": "Children Hospital",
+    "source": "Local Knowledge"
+  }
+},
+{
+  "type": "node",
+  "id": 7622826310,
+  "lat": 28.4426660,
+  "lon": 77.0089650,
+  "tags": {
+    "addr:district": "Gurugram",
+    "addr:full": "Khandsa Village Road, Sco 101, Sector 10/A",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Gautam Hospital",
+    "source": "Local Knowledge"
+  }
+},
+{
+  "type": "node",
+  "id": 7622826344,
+  "lat": 28.4577794,
+  "lon": 77.0167310,
+  "tags": {
+    "addr:district": "Gurugram",
+    "addr:full": "625, 20, Madanpuri Road, Vir Nagar, Arjun Nagar, Sector 8, Gurugram",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Lal Superspeciality Hospital",
+    "source": "Local Knowledge"
+  }
+},
+{
+  "type": "node",
+  "id": 7622826345,
+  "lat": 28.4580095,
+  "lon": 77.0164047,
+  "tags": {
+    "addr:district": "Gurugram",
+    "addr:full": "601, 20, Madanpuri Road, Manohar Nagar, Sector 7",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Shri Gobind Hospital",
+    "source": "Local Knowledge"
+  }
+},
+{
+  "type": "node",
+  "id": 9985453891,
+  "lat": 28.4682563,
+  "lon": 77.0013092,
+  "tags": {
+    "addr:street": "Sector 9A",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "ESI hospital",
+    "operator": "Employees' State Insurance",
+    "operator:short": "ESI",
+    "operator:wikidata": "Q3595726"
+  }
+},
+{
+  "type": "way",
+  "id": 59339757,
+  "center": {
+    "lat": 28.4680581,
+    "lon": 77.0255218
+  },
+  "nodes": [
+    735999477,
+    735999480,
+    735999474,
+    735999477
+  ],
+  "tags": {
+    "addr:district": "Gurgaon",
+    "addr:full": "New Railway Road",
+    "addr:postcode": "122001",
+    "addr:state": "Haryana",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Sheetla Hospital And Eye Institute Private Ltd",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "way",
+  "id": 415212104,
+  "center": {
+    "lat": 28.4685263,
+    "lon": 77.0518756
+  },
+  "nodes": [
+    4162613064,
+    4162613067,
+    4162613057,
+    4162613054,
+    4162613055,
+    4162613058,
+    4162613061,
+    4162613060,
+    4162613064
+  ],
+  "tags": {
+    "addr:city": "Gurgaon",
+    "addr:housenumber": "87, IDC",
+    "addr:postcode": "122001",
+    "addr:street": "Sector 16, Mehrauli Gurgaon Road",
+    "amenity": "hospital",
+    "emergency": "no",
+    "healthcare": "hospital",
+    "name": "AB Hospitals"
+  }
+}
+
+  ]
+}
