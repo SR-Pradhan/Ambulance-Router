@@ -4,10 +4,61 @@ import MapView from "./components/MapView";
 import RequestForm from "./components/RequestForm";
 import ResultsPanel from "./components/ResultsPanel";
 import Dashboard from "./components/Dashboard";
+import ThemeToggle from "./components/ThemeToggle";
 
 const LIVE_POLL_MS = 2000;
+const THEME_KEY = "theme";
+
+function readStoredTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    return saved === "light" || saved === "dark" ? saved : null;
+  } catch {
+    // Storage can throw in private mode or when site data is blocked. Falling
+    // back to the system setting is the right behaviour, not an error.
+    return null;
+  }
+}
+
+/**
+ * Theme state. `theme` is the user's explicit choice, or null meaning follow
+ * the system. `resolved` is what is actually on screen, which is what the rest
+ * of the UI needs to know.
+ */
+function useTheme() {
+  const [theme, setTheme] = useState(readStoredTheme);
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false
+  );
+
+  // Track the OS setting so "System" updates live rather than only on reload.
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!mq) return;
+    const onChange = (e) => setSystemDark(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme) root.dataset.theme = theme;
+    else delete root.dataset.theme;
+
+    try {
+      if (theme) localStorage.setItem(THEME_KEY, theme);
+      else localStorage.removeItem(THEME_KEY);
+    } catch {
+      // Not being able to remember the choice is not worth breaking the app.
+    }
+  }, [theme]);
+
+  const resolved = theme ?? (systemDark ? "dark" : "light");
+  return { theme, resolved, setTheme };
+}
 
 export default function App() {
+  const { theme, resolved, setTheme } = useTheme();
   const [tab, setTab] = useState("map");
   const [patient, setPatient] = useState(null);
   const [result, setResult] = useState(null);
@@ -107,7 +158,9 @@ export default function App() {
             system.
           </p>
         </div>
-        <nav>
+        <div className="header-controls">
+          <ThemeToggle theme={theme} resolved={resolved} onChange={setTheme} />
+          <nav>
           <button
             className={tab === "map" ? "active" : ""}
             onClick={() => setTab("map")}
@@ -120,7 +173,8 @@ export default function App() {
           >
             Dashboard
           </button>
-        </nav>
+          </nav>
+        </div>
       </header>
 
       {connError && (

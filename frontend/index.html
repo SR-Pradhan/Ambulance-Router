@@ -12,6 +12,20 @@
     <title>Ambulance Route Optimizer</title>
   </head>
   <body>
+    <!-- Runs before first paint so a dark theme user never sees a white flash
+         while the bundle loads. Mirrors the logic in App.jsx. -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("theme");
+          if (saved === "light" || saved === "dark") {
+            document.documentElement.dataset.theme = saved;
+          }
+        } catch (e) {
+          /* private mode or blocked storage: fall back to the OS setting */
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

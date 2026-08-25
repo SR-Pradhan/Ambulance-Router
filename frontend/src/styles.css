@@ -34,6 +34,9 @@
   --accent: #1f5fae;
   --accent-hover: #1a5197;
   --accent-tint: #e8f1fc;
+  /* Ink that sits ON the accent colour. Dark mode uses a light blue accent, so
+     this flips to near black there rather than staying white. */
+  --on-accent: #ffffff;
 
   /* Status: text ink and its matching tint */
   --good: #0f6b0f;
@@ -129,7 +132,7 @@ nav button.active {
 
 .badge {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border-radius: 20px;
   min-width: 19px;
   height: 19px;
@@ -238,7 +241,7 @@ input::placeholder { color: #9ca3af; }
 
 button {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: 1px solid transparent;
   padding: 9px 16px;
   border-radius: var(--radius-sm);
@@ -509,3 +512,135 @@ td.actions { display: flex; gap: 6px; align-items: center; }
 /* Keep identifier columns narrow so tables do not spread thin */
 .table-wrap table { table-layout: auto; }
 th:first-child, td:first-child { width: 1%; white-space: nowrap; }
+
+/* ---------------------------------------------------------------------------
+   Dark theme
+
+   These are SELECTED steps for the dark surface, not an inversion of the light
+   palette. Inverting produces washed out, low contrast colour every time.
+   Each value below was contrast checked against the dark surface it renders on:
+   all text clears WCAG AA 4.5:1 and every status dot clears 3:1.
+
+   Declared twice on purpose:
+     * the media query follows the operating system setting
+     * the [data-theme] rule follows the in app switcher, and must win in both
+       directions, which is why the media query is guarded against an explicit
+       light choice.
+--------------------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg: #101215;
+    --surface: #17191d;
+    --surface-sunken: #1e2126;
+    --border: #2a2e35;
+    --border-strong: #3b414a;
+
+    --ink: #f1f3f5;
+    --ink-secondary: #b9c0c9;
+    --ink-muted: #8f97a1;
+
+    --accent: #6aa9f0;
+    --accent-hover: #8bbcf4;
+    --accent-tint: #16263a;
+    --on-accent: #0d1117;
+
+    --good: #5cd67a;
+    --good-tint: #16301c;
+    --warning: #f5c04a;
+    --warning-tint: #332813;
+    --critical: #f78b85;
+    --critical-tint: #3a1f1e;
+
+    --dot-neutral: #6b7280;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #101215;
+  --surface: #17191d;
+  --surface-sunken: #1e2126;
+  --border: #2a2e35;
+  --border-strong: #3b414a;
+
+  --ink: #f1f3f5;
+  --ink-secondary: #b9c0c9;
+  --ink-muted: #8f97a1;
+
+  --accent: #6aa9f0;
+  --accent-hover: #8bbcf4;
+  --accent-tint: #16263a;
+  --on-accent: #0d1117;
+
+  --good: #5cd67a;
+  --good-tint: #16301c;
+  --warning: #f5c04a;
+  --warning-tint: #332813;
+  --critical: #f78b85;
+  --critical-tint: #3a1f1e;
+
+  --dot-neutral: #6b7280;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Map tiles are bright artwork. Rather than depend on a second tile host, the
+   tile pane alone is darkened. Markers, routes and popups live in other panes,
+   so they keep their real colours. */
+:root[data-theme="dark"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.75);
+}
+
+:root[data-theme="dark"] .leaflet-control-attribution {
+  background: rgba(23, 25, 29, 0.85) !important;
+}
+
+:root[data-theme="dark"] .emoji-marker .pin { background: #f1f3f5; }
+
+/* --- Theme switcher ------------------------------------------------------- */
+
+.header-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.theme-toggle {
+  display: inline-flex;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 2px;
+}
+
+.theme-toggle button {
+  background: transparent;
+  color: var(--ink-muted);
+  border: 0;
+  padding: 6px 11px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.theme-toggle button:hover { background: transparent; color: var(--ink); }
+
+.theme-toggle button.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+/* Below the tablet breakpoint the words drop away and the icons carry it, so
+   the header does not wrap awkwardly. "System" keeps its label because it has
+   no icon of its own. */
+@media (max-width: 720px) {
+  .theme-toggle button svg + span { display: none; }
+}
