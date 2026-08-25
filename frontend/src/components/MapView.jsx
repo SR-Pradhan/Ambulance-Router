@@ -1,5 +1,5 @@
-import { Fragment } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "react-leaflet";
+import { Fragment, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 
 // Leaflet's default marker icons are loaded from relative image paths that
@@ -22,6 +22,45 @@ const AMBULANCE = emojiIcon("🚑", "#1565c0");
 const AMBULANCE_IDLE = emojiIcon("🚑", "#9e9e9e");
 const PATIENT = emojiIcon("📍", "#ad1457");
 
+// Make the map behave the way a Mac trackpad expects.
+//
+// Leaflet maps ALL wheel events to zoom. On a trackpad a two-finger swipe IS a
+// wheel event, so the map could only be panned by click-and-holding -- swiping
+// just zoomed in and out. That is how Leaflet has always behaved, but it is not
+// how any native map app behaves.
+//
+// Browsers report a pinch gesture as a wheel event with ctrlKey set, which is
+// what lets us tell the two apart:
+//   two-finger swipe (ctrlKey false) -> pan, like Google/Apple Maps
+//   pinch            (ctrlKey true)  -> zoom, centred on the pointer
+//
+// Leaflet's own scrollWheelZoom is turned off on the MapContainer so it does
+// not fight this handler.
+function TrackpadGestures() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+
+    const onWheel = (e) => {
+      e.preventDefault(); // stop the page itself from scrolling
+
+      if (e.ctrlKey) {
+        const zoom = map.getZoom() - e.deltaY * 0.01;
+        map.setZoomAround(map.mouseEventToContainerPoint(e), zoom, { animate: false });
+      } else {
+        map.panBy([e.deltaX, e.deltaY], { animate: false });
+      }
+    };
+
+    // passive: false is required or preventDefault() is ignored.
+    container.addEventListener("wheel", onWheel, { passive: false });
+    return () => container.removeEventListener("wheel", onWheel);
+  }, [map]);
+
+  return null;
+}
+
 // Click anywhere to set the patient's location. This is the interaction that
 // makes the whole thing feel like a real dispatch tool.
 function ClickToSetPatient({ onPick }) {
@@ -39,12 +78,19 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
 
   return (
     <div className="map-wrap">
-      <MapContainer center={center} zoom={13} className="map">
+      <MapContainer
+        center={center}
+        zoom={13}
+        className="map"
+        scrollWheelZoom={false}
+        zoomSnap={0}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
+        <TrackpadGestures />
         <ClickToSetPatient onPick={onPickPatient} />
 
         {/* Hospitals - red pin means full, so it is visibly out of service */}
@@ -125,6 +171,7 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
 
       <p className="map-hint">
         Click anywhere on the map to place the patient, then create a request.
+        Two-finger swipe or drag to pan · pinch to zoom.
       </p>
     </div>
   );
