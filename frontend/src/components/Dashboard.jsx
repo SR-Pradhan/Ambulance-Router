@@ -117,6 +117,7 @@ export default function Dashboard({
                 <th className="numeric">Free beds</th>
                 <th className="numeric">Total</th>
                 <th className="numeric">Occupancy</th>
+                <th>Units</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -141,6 +142,19 @@ export default function Dashboard({
                   </td>
                   <td className="numeric">{hosp.total_beds}</td>
                   <td className="numeric">{hosp.occupancy_percent}%</td>
+                  <td>
+                    {hosp.facilities?.length ? (
+                      <span className="unit-list">
+                        {hosp.facilities.map((f) => (
+                          <span key={f} className="unit">
+                            {f}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      <span className="note">general only</span>
+                    )}
+                  </td>
                   <td>
                     <span className={hosp.accepting ? "chip chip-good" : "chip chip-critical"}>
                       {hosp.accepting ? "Accepting" : "Full"}

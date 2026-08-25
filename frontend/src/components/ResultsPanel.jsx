@@ -50,7 +50,9 @@ export default function ResultsPanel({ result }) {
           </strong>
           <span className="sub">
             {ambulance
-              ? `${ambulance.pickup_eta_minutes} min pickup, ${route.eta_minutes} min transport`
+              ? ambulance.pickup_eta_minutes != null
+                ? `${ambulance.pickup_eta_minutes} min pickup, ${route.eta_minutes} min transport`
+                : `Ambulance ${ambulance.id} assigned from the queue`
               : "Waiting for an ambulance"}
           </span>
         </div>
@@ -69,11 +71,23 @@ export default function ResultsPanel({ result }) {
           <dt>Assumed speed</dt>
           <dd>{route.assumed_speed_kmh} km/h</dd>
         </div>
+        {result.required_facility && (
+          <div>
+            <dt>Required unit</dt>
+            <dd>{result.required_facility}</dd>
+          </div>
+        )}
+        <div>
+          <dt>Units available</dt>
+          <dd>{hospital.facilities?.join(", ") || "general only"}</dd>
+        </div>
         {ambulance && (
           <div>
             <dt>Ambulance</dt>
             <dd>
-              {ambulance.id}, {ambulance.distance} km away
+              {ambulance.distance != null
+                ? `${ambulance.id}, ${ambulance.distance} km away`
+                : ambulance.id}
             </dd>
           </div>
         )}

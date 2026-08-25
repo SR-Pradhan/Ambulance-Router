@@ -125,10 +125,10 @@ export default function App() {
     if (Number.isFinite(lat) && Number.isFinite(lng)) setPatient({ lat, lng });
   };
 
-  const createRequest = async (lat, lng, severity) => {
+  const createRequest = async (lat, lng, severity, requiredFacility) => {
     setBusy(true);
     try {
-      const created = await api.createRequest(lat, lng, severity);
+      const created = await api.createRequest(lat, lng, severity, requiredFacility);
       setResult(created);
       await refresh();
     } finally {

@@ -49,13 +49,17 @@ BLOCKED = {(5, 9), (6, 10)}
 # Each is placed slightly OFF its nearest node, so snapping does real work.
 # Metro Care is intentionally left with 0 available beds: it is the live test
 # case proving the heap's bed filter excludes full hospitals. Do not "fix" it.
+# Facilities are assigned so the constraint is demonstrable, not decorative.
+# Sunrise Medical is the hospital that normally wins on distance, and it has NO
+# specialist units: a cardiac case therefore has to be sent past it to City
+# Hospital, which is the whole point of modelling facilities at all.
 HOSPITALS = [
-    # name,              lat,      lng,      total, available
-    ("City Hospital",    28.4605, 77.0210,   50,    12),
-    ("Metro Care",       28.4795, 77.0405,   30,     0),
-    ("Sunrise Medical",  28.4410, 77.0395,   40,     8),
-    ("Green Valley",     28.4990, 77.0205,   60,    25),
-    ("St. Mary",         28.4595, 77.0610,   35,     3),
+    # name,              lat,      lng,     total, avail,  icu,   trauma, cardiac
+    ("City Hospital",    28.4605, 77.0210,   50,    12,    True,  True,   True),
+    ("Metro Care",       28.4795, 77.0405,   30,     0,    True,  False,  False),
+    ("Sunrise Medical",  28.4410, 77.0395,   40,     8,    False, False,  False),
+    ("Green Valley",     28.4990, 77.0205,   60,    25,    True,  False,  True),
+    ("St. Mary",         28.4595, 77.0610,   35,     3,    False, True,   False),
 ]
 
 AMBULANCES = [
@@ -123,9 +127,11 @@ def seed():
                     edge_count += 1
 
         # --- hospitals and ambulances ---
-        for name, lat, lng, total, available in HOSPITALS:
+        for name, lat, lng, total, available, icu, trauma, cardiac in HOSPITALS:
             db.add(Hospital(name=name, latitude=lat, longitude=lng,
-                            total_beds=total, available_beds=available))
+                            total_beds=total, available_beds=available,
+                            has_icu=icu, has_trauma_unit=trauma,
+                            has_cardiac_unit=cardiac))
         for lat, lng, status in AMBULANCES:
             db.add(Ambulance(current_lat=lat, current_lng=lng, status=status))
 
@@ -144,10 +150,15 @@ def seed():
         print(f"       {len(HOSPITALS)} hospitals, {len(AMBULANCES)} ambulances.")
         print()
         print("Hospital -> nearest road node (this is what snapping will pick):")
-        for name, lat, lng, _, available in HOSPITALS:
+        for name, lat, lng, _, available, icu, trauma, cardiac in HOSPITALS:
             best = min(coords, key=lambda n: haversine_km(lat, lng, *coords[n]))
             d = haversine_km(lat, lng, *coords[best])
-            print(f"  {name:<16} -> node {best:<3} ({d:.3f} km)  beds={available}")
+            units = ", ".join(
+                u for u, has in (("icu", icu), ("trauma", trauma),
+                                 ("cardiac", cardiac)) if has
+            ) or "none"
+            print(f"  {name:<16} -> node {best:<3} ({d:.3f} km)  "
+                  f"beds={available:<3} units: {units}")
     finally:
         db.close()
 

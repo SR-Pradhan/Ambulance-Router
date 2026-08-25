@@ -11,6 +11,7 @@ from app.dsa.dijkstra import dijkstra_all, reconstruct_path
 from app.dsa.geo import snap_to_node
 from app.dsa.heap_ranking import rank_hospitals, rank_by_distance
 from app.dsa.priority_queue import PriorityQueue, triage_score
+from app.facilities import facility_list, hospital_has_facility, FACILITY_LABELS
 
 router = APIRouter()
 
@@ -20,7 +21,8 @@ router = APIRouter()
 AVG_AMBULANCE_SPEED_KMH = 40.0
 
 
-def compute_best_route(db: Session, patient_lat: float, patient_lng: float):
+def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
+                       required_facility: str | None = None):
     """Pick the best hospital for a patient and route to it.
 
     This is where the two halves of the project finally meet: the heap picks
@@ -33,7 +35,7 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float):
     graph, coords = load_road_network(db)
 
     if not coords:
-        return None
+        return {"error": "no_road_network"}
 
     # 2. The patient gave us a coordinate; Dijkstra needs a node.
     patient_node, patient_offset = snap_to_node(patient_lat, patient_lng, coords)
@@ -44,9 +46,17 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float):
 
     # 4. Build the candidate list, measured by road distance.
     candidates = []
+    rejected_for_facility = 0
     for h in db.query(Hospital).all():
         if h.available_beds <= 0:
             continue  # full - the heap would drop it anyway, but skip the work
+
+        # A missing specialist unit is a hard constraint, exactly like zero
+        # beds. It is filtered here rather than penalised in the score: no
+        # amount of free beds makes a hospital able to treat a cardiac case.
+        if not hospital_has_facility(h, required_facility):
+            rejected_for_facility += 1
+            continue
 
         h_node, h_offset = snap_to_node(h.latitude, h.longitude, coords)
         road_km = distances.get(h_node, float('inf'))
@@ -60,13 +70,20 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float):
             "longitude": h.longitude,
             "available_beds": h.available_beds,
             "total_beds": h.total_beds,
+            "facilities": facility_list(h),
             "node_id": h_node,
             "distance": round(road_km, 3),      # key the heap ranks on
             "distance_type": "road",
         })
 
     if not candidates:
-        return None
+        # Distinguish "everywhere is full" from "nowhere has the right unit",
+        # because they call for completely different responses in real life.
+        return {
+            "error": "no_candidate",
+            "required_facility": required_facility,
+            "rejected_for_facility": rejected_for_facility,
+        }
 
     # 5. The heap picks the winner. rank_hospitals doesn't know or care that
     #    "distance" is now road distance rather than straight-line.
@@ -178,9 +195,10 @@ def dispatch_waiting(db: Session):
             break
 
         req = queue.pop()
-        result = compute_best_route(db, req.patient_lat, req.patient_lng)
-        if result is None or result["ambulance"] is None:
-            continue  # no reachable hospital with beds, or no usable ambulance
+        result = compute_best_route(db, req.patient_lat, req.patient_lng,
+                                    req.required_facility)
+        if _failed(result) or result["ambulance"] is None:
+            continue  # no eligible hospital, or no usable ambulance
 
         vehicle = db.query(Ambulance).filter(
             Ambulance.id == result["ambulance"]["id"]
@@ -197,6 +215,11 @@ def dispatch_waiting(db: Session):
     if dispatched:
         db.commit()
     return dispatched
+
+
+def _failed(result):
+    """compute_best_route returns a dict either way; this is the failure check."""
+    return result is None or "error" in result
 
 
 @router.get("/queue")
@@ -238,13 +261,21 @@ def get_queue(db: Session = Depends(get_db)):
 @router.post("/requests")
 def create_request(payload: EmergencyRequestCreate, db: Session = Depends(get_db)):
     """Create an emergency request: choose a hospital, route to it, store it."""
-    result = compute_best_route(db, payload.patient_lat, payload.patient_lng)
+    result = compute_best_route(db, payload.patient_lat, payload.patient_lng,
+                                payload.required_facility)
 
-    if result is None:
-        raise HTTPException(
-            status_code=503,
-            detail="No hospital with available beds is reachable from this location.",
-        )
+    if _failed(result):
+        # Say WHICH constraint could not be met. "No hospital has a cardiac
+        # unit free" and "everywhere is full" need different responses.
+        if result.get("rejected_for_facility"):
+            unit = FACILITY_LABELS.get(payload.required_facility,
+                                       payload.required_facility)
+            detail = (f"No reachable hospital with free beds has a {unit}. "
+                      f"{result['rejected_for_facility']} hospital(s) had beds "
+                      f"but lacked the required unit.")
+        else:
+            detail = "No hospital with available beds is reachable from this location."
+        raise HTTPException(status_code=503, detail=detail)
 
     # The request is created as PENDING and joins the triage queue. It does not
     # grab an ambulance directly -- dispatch_waiting decides who gets the next
@@ -254,6 +285,7 @@ def create_request(payload: EmergencyRequestCreate, db: Session = Depends(get_db
         patient_lat=payload.patient_lat,
         patient_lng=payload.patient_lng,
         severity=payload.severity,
+        required_facility=payload.required_facility,
         assigned_hospital_id=result["hospital"]["id"],
         assigned_ambulance_id=None,
         status="pending",
@@ -270,16 +302,27 @@ def create_request(payload: EmergencyRequestCreate, db: Session = Depends(get_db
     # Report what actually happened, not what compute_best_route proposed --
     # the queue may have given that ambulance to someone else.
     assigned = None
+    same_as_proposed = False
     if emergency.assigned_ambulance_id is not None:
-        vehicle = db.query(Ambulance).filter(
-            Ambulance.id == emergency.assigned_ambulance_id
-        ).first()
-        if vehicle:
-            assigned = {
-                "id": vehicle.id,
-                "current_lat": vehicle.current_lat,
-                "current_lng": vehicle.current_lng,
-            }
+        proposed = result.get("ambulance")
+        # The queue may have handed the proposed ambulance to a more urgent
+        # patient. Only reuse the computed pickup leg when the ambulance that
+        # was actually assigned is the one the route was computed for.
+        same_as_proposed = bool(
+            proposed and proposed["id"] == emergency.assigned_ambulance_id
+        )
+        if same_as_proposed:
+            assigned = proposed
+        else:
+            vehicle = db.query(Ambulance).filter(
+                Ambulance.id == emergency.assigned_ambulance_id
+            ).first()
+            if vehicle:
+                assigned = {
+                    "id": vehicle.id,
+                    "current_lat": vehicle.current_lat,
+                    "current_lng": vehicle.current_lng,
+                }
 
     queued_ahead = [
         r.id for r in waiting_queue(db).drain() if r.id != emergency.id
@@ -289,11 +332,17 @@ def create_request(payload: EmergencyRequestCreate, db: Session = Depends(get_db
         "request_id": emergency.id,
         "status": emergency.status,
         "severity": emergency.severity,
+        "required_facility": emergency.required_facility,
         "created_at": emergency.created_at,
         **result,
         "ambulance": assigned,
         "queued_behind": queued_ahead,
-        "total_eta_minutes": result["total_eta_minutes"] if assigned else None,
+        # Only report a total ETA when it belongs to the ambulance that was
+        # actually assigned; otherwise it would be a number for a different
+        # vehicle's journey.
+        "total_eta_minutes": (
+            result["total_eta_minutes"] if same_as_proposed else None
+        ),
     }
 
 
@@ -316,7 +365,8 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
         Hospital.id == emergency.assigned_hospital_id
     ).first()
 
-    result = compute_best_route(db, emergency.patient_lat, emergency.patient_lng)
+    result = compute_best_route(db, emergency.patient_lat, emergency.patient_lng,
+                                emergency.required_facility)
 
     # Show the ambulance that was ACTUALLY assigned, read from the request --
     # not result["ambulance"]. That one is recomputed live, and since the
@@ -342,7 +392,8 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
             "current_lng": vehicle.current_lng,
             "status": vehicle.status,
         } if vehicle else None,
-        "route": result["route"] if result else None,
+        "required_facility": emergency.required_facility,
+        "route": None if _failed(result) else result["route"],
     }
 
 
@@ -365,6 +416,7 @@ def list_requests(db: Session = Depends(get_db)):
                 "patient_lng": r.patient_lng,
                 "status": r.status,
                 "severity": r.severity,
+                "required_facility": r.required_facility,
                 "assigned_hospital_id": r.assigned_hospital_id,
                 "assigned_hospital_name": hospitals.get(r.assigned_hospital_id),
                 "assigned_ambulance_id": r.assigned_ambulance_id,

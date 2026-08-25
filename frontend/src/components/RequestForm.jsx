@@ -1,5 +1,12 @@
 import { useState } from "react";
 
+const FACILITIES = [
+  { value: "", label: "None needed (general case)" },
+  { value: "icu", label: "Intensive care" },
+  { value: "trauma", label: "Trauma unit" },
+  { value: "cardiac", label: "Cardiac unit" },
+];
+
 const SEVERITIES = [
   { value: "critical", label: "Critical (life threatening)" },
   { value: "urgent", label: "Urgent (serious, not immediately fatal)" },
@@ -9,6 +16,7 @@ const SEVERITIES = [
 export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) {
   const [error, setError] = useState(null);
   const [severity, setSeverity] = useState("standard");
+  const [facility, setFacility] = useState("");
 
   // The seeded road grid spans 28.44 to 28.50 lat and 77.00 to 77.06 lng.
   // Outside that the nearest road node is far away and the route looks
@@ -23,7 +31,7 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
       return;
     }
     try {
-      await onSubmit(patient.lat, patient.lng, severity);
+      await onSubmit(patient.lat, patient.lng, severity, facility || null);
     } catch (err) {
       setError(err.message);
     }
@@ -72,6 +80,19 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
             {SEVERITIES.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="field-row">
+        <label>
+          Required unit
+          <select value={facility} onChange={(e) => setFacility(e.target.value)}>
+            {FACILITIES.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
               </option>
             ))}
           </select>

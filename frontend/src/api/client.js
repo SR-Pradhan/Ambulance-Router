@@ -38,10 +38,16 @@ async function request(path, options = {}) {
 
 export const api = {
   // Dispatch
-  createRequest: (patient_lat, patient_lng, severity = "standard") =>
+  createRequest: (patient_lat, patient_lng, severity = "standard",
+                  required_facility = null) =>
     request("/requests", {
       method: "POST",
-      body: JSON.stringify({ patient_lat, patient_lng, severity }),
+      body: JSON.stringify({
+        patient_lat,
+        patient_lng,
+        severity,
+        required_facility,
+      }),
     }),
   queue: () => request("/queue"),
   listRequests: () => request("/requests"),

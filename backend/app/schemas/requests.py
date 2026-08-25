@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -20,10 +20,14 @@ class EmergencyRequestCreate(BaseModel):
     # the allowed values, so an invalid severity can never reach the queue.
     severity: Literal["critical", "urgent", "standard"] = Field(
         "standard", description="Triage severity; drives dispatch order")
+    # A missing facility is a HARD constraint, not a preference: a hospital
+    # without a cardiac unit cannot treat a cardiac case at any distance.
+    required_facility: Optional[Literal["icu", "trauma", "cardiac"]] = Field(
+        None, description="Specialist unit the patient needs, if any")
 
     model_config = {
         "json_schema_extra": {
             "example": {"patient_lat": 28.44, "patient_lng": 77.00,
-                        "severity": "critical"}
+                        "severity": "critical", "required_facility": "cardiac"}
         }
     }

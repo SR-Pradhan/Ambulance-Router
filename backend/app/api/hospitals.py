@@ -5,6 +5,7 @@ from app.models.models import Hospital
 from app.dsa.geo import haversine_km
 from app.dsa.heap_ranking import rank_hospitals
 from app.schemas.hospitals import NearbyHospitalsQuery, BedUpdate
+from app.facilities import facility_list, hospital_has_facility
 
 router = APIRouter()
 
@@ -31,6 +32,7 @@ def get_nearby_hospitals(
             "longitude": h.longitude,
             "available_beds": h.available_beds,
             "total_beds": h.total_beds,
+            "facilities": facility_list(h),
             "distance": round(haversine_km(lat, lng, h.latitude, h.longitude), 3),
         })
 
@@ -63,6 +65,7 @@ def list_hospitals(db: Session = Depends(get_db)):
                 "longitude": h.longitude,
                 "total_beds": h.total_beds,
                 "available_beds": h.available_beds,
+                "facilities": facility_list(h),
                 "occupied_beds": h.total_beds - h.available_beds,
                 "occupancy_percent": round(
                     (h.total_beds - h.available_beds) / h.total_beds * 100, 1
