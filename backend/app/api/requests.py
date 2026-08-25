@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models.models import RoadNode, RoadEdge, Hospital, EmergencyRequest
+from app.models.models import RoadNode, RoadEdge, Hospital, Ambulance, EmergencyRequest
 from app.schemas.requests import EmergencyRequestCreate
 from app.dsa.graph import Graph
 from app.dsa.dijkstra import dijkstra_all, reconstruct_path
 from app.dsa.geo import snap_to_node
-from app.dsa.heap_ranking import rank_hospitals
+from app.dsa.heap_ranking import rank_hospitals, rank_by_distance
 
 router = APIRouter()
 
@@ -77,6 +77,38 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float):
     path = reconstruct_path(prev, patient_node, best["node_id"])
     eta_minutes = round(best["distance"] / AVG_AMBULANCE_SPEED_KMH * 60, 1)
 
+    # 7. Nearest AVAILABLE ambulance to the patient.
+    #    We reuse the very same `distances` map computed above. That works
+    #    because Graph.add_edge inserts both directions, so the graph is
+    #    undirected and distance(patient -> ambulance) equals
+    #    distance(ambulance -> patient). No second Dijkstra run is needed.
+    ambulance_candidates = []
+    for a in db.query(Ambulance).all():
+        if a.status != "available":
+            continue
+        a_node, _ = snap_to_node(a.current_lat, a.current_lng, coords)
+        pickup_km = distances.get(a_node, float('inf'))
+        if pickup_km == float('inf'):
+            continue
+        ambulance_candidates.append({
+            "id": a.id,
+            "current_lat": a.current_lat,
+            "current_lng": a.current_lng,
+            "node_id": a_node,
+            "distance": round(pickup_km, 3),
+        })
+
+    nearest = rank_by_distance(ambulance_candidates, top_k=1)
+    ambulance = nearest[0] if nearest else None
+
+    if ambulance is not None:
+        ambulance["pickup_path"] = reconstruct_path(
+            prev, patient_node, ambulance["node_id"]
+        )
+        ambulance["pickup_eta_minutes"] = round(
+            ambulance["distance"] / AVG_AMBULANCE_SPEED_KMH * 60, 1
+        )
+
     return {
         "patient": {
             "lat": patient_lat,
@@ -91,6 +123,11 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float):
             "eta_minutes": eta_minutes,
             "assumed_speed_kmh": AVG_AMBULANCE_SPEED_KMH,
         },
+        "ambulance": ambulance,
+        "total_eta_minutes": (
+            round(ambulance["pickup_eta_minutes"] + eta_minutes, 1)
+            if ambulance else None
+        ),
         "alternatives": ranked[1:],
     }
 
@@ -106,14 +143,29 @@ def create_request(payload: EmergencyRequestCreate, db: Session = Depends(get_db
             detail="No hospital with available beds is reachable from this location.",
         )
 
+    # Dispatch the nearest available ambulance, if there is one. A request with
+    # no ambulance is still worth creating -- the hospital choice stands and the
+    # request simply waits, which is why this is not an error.
+    ambulance = result["ambulance"]
+
     emergency = EmergencyRequest(
         patient_lat=payload.patient_lat,
         patient_lng=payload.patient_lng,
         assigned_hospital_id=result["hospital"]["id"],
-        assigned_ambulance_id=None,   # ambulance dispatch is v0.6
-        status="pending",
+        assigned_ambulance_id=ambulance["id"] if ambulance else None,
+        # "en_route" once an ambulance is actually on its way; otherwise it
+        # stays "pending" until one frees up.
+        status="en_route" if ambulance else "pending",
     )
     db.add(emergency)
+
+    if ambulance:
+        # Take the ambulance out of the available pool so the next request
+        # cannot be given the same one.
+        vehicle = db.query(Ambulance).filter(Ambulance.id == ambulance["id"]).first()
+        if vehicle:
+            vehicle.status = "busy"
+
     db.commit()
     db.refresh(emergency)
 
@@ -146,6 +198,15 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
 
     result = compute_best_route(db, emergency.patient_lat, emergency.patient_lng)
 
+    # Show the ambulance that was ACTUALLY assigned, read from the request --
+    # not result["ambulance"]. That one is recomputed live, and since the
+    # assigned vehicle is now "busy" it would report a different ambulance.
+    vehicle = None
+    if emergency.assigned_ambulance_id is not None:
+        vehicle = db.query(Ambulance).filter(
+            Ambulance.id == emergency.assigned_ambulance_id
+        ).first()
+
     return {
         "request_id": emergency.id,
         "status": emergency.status,
@@ -155,5 +216,11 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
         "assigned_hospital_id": emergency.assigned_hospital_id,
         "assigned_hospital_name": hospital.name if hospital else None,
         "assigned_ambulance_id": emergency.assigned_ambulance_id,
+        "assigned_ambulance": {
+            "id": vehicle.id,
+            "current_lat": vehicle.current_lat,
+            "current_lng": vehicle.current_lng,
+            "status": vehicle.status,
+        } if vehicle else None,
         "route": result["route"] if result else None,
     }
