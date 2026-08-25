@@ -2,7 +2,8 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "app"))
 
-from dsa.geo import haversine_km, snap_to_node
+from dsa.geo import (haversine_km, snap_to_node,
+                     interpolate_point, position_along_path)
 
 
 def test_same_point_is_zero():
@@ -86,6 +87,67 @@ def test_snap_is_not_fooled_by_longitude():
     assert d_east < d_north
 
 
+# A straight 2-leg path: (28.44,77.00) -> (28.44,77.02) -> (28.44,77.04)
+# Purely east-west at constant latitude, so each leg is the same length and the
+# arithmetic is checkable by hand.
+STRAIGHT_PATH = [(28.44, 77.00), (28.44, 77.02), (28.44, 77.04)]
+
+
+def test_interpolate_midpoint():
+    lat, lng = interpolate_point(28.44, 77.00, 28.44, 77.02, 0.5)
+    print("Test 9 - Midpoint:", lat, round(lng, 5))
+    assert lat == 28.44
+    assert abs(lng - 77.01) < 1e-9
+
+
+def test_interpolate_clamps():
+    start = interpolate_point(0, 0, 10, 10, -5)
+    end = interpolate_point(0, 0, 10, 10, 99)
+    print("Test 10 - Clamping:", start, end)
+    assert start == (0, 0)
+    assert end == (10, 10)
+
+
+def test_position_at_start_and_end():
+    lat, lng, travelled, total, finished = position_along_path(STRAIGHT_PATH, 0)
+    print(f"Test 11 - At start: ({lat}, {lng}) total={total:.3f} km")
+    assert (lat, lng) == STRAIGHT_PATH[0]
+    assert not finished
+
+    lat, lng, travelled, total, finished = position_along_path(STRAIGHT_PATH, 999)
+    print(f"Test 12 - Overshoot clamps to end: ({lat}, {lng}) finished={finished}")
+    assert (lat, lng) == STRAIGHT_PATH[-1]
+    assert finished
+
+
+def test_position_halfway_lands_on_middle_waypoint():
+    """Half the total distance must land exactly on the middle waypoint,
+    because both legs are the same length."""
+    _, _, _, total, _ = position_along_path(STRAIGHT_PATH, 0)
+    lat, lng, travelled, _, finished = position_along_path(STRAIGHT_PATH, total / 2)
+    print(f"Test 13 - Halfway: ({lat}, {round(lng, 6)}) after {travelled:.3f} km")
+    assert abs(lng - 77.02) < 1e-6, f"Expected to land on 77.02, got {lng}"
+    assert not finished
+
+
+def test_position_quarter_way_is_inside_first_leg():
+    _, _, _, total, _ = position_along_path(STRAIGHT_PATH, 0)
+    lat, lng, _, _, _ = position_along_path(STRAIGHT_PATH, total / 4)
+    print(f"Test 14 - Quarter way: ({lat}, {round(lng, 6)})")
+    assert 77.00 < lng < 77.02, "Quarter of the way must be inside the first leg"
+    assert abs(lng - 77.01) < 1e-6
+
+
+def test_position_empty_and_single_point():
+    print("Test 15 - Empty path:", position_along_path([], 5))
+    assert position_along_path([], 5) is None
+
+    result = position_along_path([(28.44, 77.00)], 5)
+    print("Test 16 - Single point path:", result)
+    assert result[:2] == (28.44, 77.00)
+    assert result[4] is True
+
+
 if __name__ == "__main__":
     test_same_point_is_zero()
     test_known_distance_bbsr_to_cuttack()
@@ -95,4 +157,10 @@ if __name__ == "__main__":
     test_snap_exact_node_is_zero()
     test_snap_empty_returns_none()
     test_snap_is_not_fooled_by_longitude()
+    test_interpolate_midpoint()
+    test_interpolate_clamps()
+    test_position_at_start_and_end()
+    test_position_halfway_lands_on_middle_waypoint()
+    test_position_quarter_way_is_inside_first_leg()
+    test_position_empty_and_single_point()
     print("\nAll geo tests passed.")

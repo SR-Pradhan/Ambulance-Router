@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import route, hospitals, requests
+from app.api import route, hospitals, requests, ambulances, admin
 
 app = FastAPI(title="Ambulance Route Optimizer")
 
@@ -29,6 +29,8 @@ app.add_middleware(
 app.include_router(route.router)
 app.include_router(hospitals.router)
 app.include_router(requests.router)
+app.include_router(ambulances.router)
+app.include_router(admin.router)
 
 
 @app.get("/")

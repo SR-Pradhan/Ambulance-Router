@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db import get_db
-from app.models.models import RoadNode, RoadEdge
-from app.dsa.graph import Graph
+from app.graph_loader import load_road_network
 from app.dsa.dijkstra import dijkstra
 from app.dsa.astar import astar
 
@@ -26,12 +25,7 @@ def get_route(
     doing anything, and they only differ once the heuristic is in the same unit
     as the edge weights (see astar.heuristic).
     """
-    coords = {n.id: (n.lat, n.lng) for n in db.query(RoadNode).all()}
-    edges = db.query(RoadEdge).all()
-
-    g = Graph()
-    for e in edges:
-        g.add_edge(e.from_node_id, e.to_node_id, e.weight)
+    g, coords = load_road_network(db)
 
     if source not in g.adj or dest not in g.adj:
         raise HTTPException(
