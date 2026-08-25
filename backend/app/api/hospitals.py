@@ -45,8 +45,14 @@ def get_nearby_hospitals(
 
 @router.get("/hospitals")
 def list_hospitals(db: Session = Depends(get_db)):
-    """Every hospital with its current capacity. Feeds the admin dashboard."""
-    hospitals = db.query(Hospital).all()
+    """Every hospital with its current capacity. Feeds the admin dashboard.
+
+    ORDER BY id is not optional here. Without it Postgres returns rows in
+    physical order, and UPDATE rewrites a row at the end of the table -- so
+    every bed adjustment made that hospital jump to a different position in the
+    dashboard table, with rows shuffling under the user's cursor as they click.
+    """
+    hospitals = db.query(Hospital).order_by(Hospital.id).all()
     return {
         "count": len(hospitals),
         "hospitals": [

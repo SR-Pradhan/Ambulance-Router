@@ -59,7 +59,9 @@ def _journey_coords(db, graph, coords, request, ambulance, hospital):
 @router.get("/ambulances")
 def list_ambulances(db: Session = Depends(get_db)):
     """All ambulances with their home position and status."""
-    ambulances = db.query(Ambulance).all()
+    # Ordered for the same reason as /hospitals: completing a trip UPDATEs the
+    # ambulance row, which would otherwise reorder the list.
+    ambulances = db.query(Ambulance).order_by(Ambulance.id).all()
     return {
         "count": len(ambulances),
         "available": sum(1 for a in ambulances if a.status == "available"),
@@ -163,7 +165,7 @@ def live_ambulances(db: Session = Depends(get_db)):
             "progress_percent": None,
             "route": [],
         }
-        for a in db.query(Ambulance).all()
+        for a in db.query(Ambulance).order_by(Ambulance.id).all()
         if a.id not in moving_ids
     ]
 
