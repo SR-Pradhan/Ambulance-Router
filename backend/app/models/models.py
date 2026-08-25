@@ -38,7 +38,14 @@ class EmergencyRequest(Base):
     patient_lng = Column(Float, nullable=False)
     assigned_ambulance_id = Column(Integer, ForeignKey("ambulances.id"))
     assigned_hospital_id = Column(Integer, ForeignKey("hospitals.id"))
-    status = Column(String, nullable=False, default="pending")
+    # server_default as well as default: `default` is applied by SQLAlchemy on
+    # insert, `server_default` is a real DEFAULT in the table. Without the
+    # latter, a row inserted by raw SQL (or psql by hand) would violate the NOT
+    # NULL constraint, and the schema created by create_all would not match the
+    # one this project was originally developed against.
+    status = Column(String, nullable=False, default="pending",
+                    server_default="pending")
     # Triage severity: critical | urgent | standard. Drives the priority queue.
-    severity = Column(String, nullable=False, default="standard")
+    severity = Column(String, nullable=False, default="standard",
+                      server_default="standard")
     created_at = Column(TIMESTAMP, server_default=func.now())

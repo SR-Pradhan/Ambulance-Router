@@ -23,8 +23,12 @@ validated system.
 """
 
 from sqlalchemy import text
-from app.db import SessionLocal
-from app.models.models import RoadNode, RoadEdge, Hospital, Ambulance
+from app.db import SessionLocal, engine, Base
+# Importing the models registers every table on Base.metadata, which is what
+# create_tables() below uses. EmergencyRequest is imported for that side effect
+# even though this script never inserts one.
+from app.models.models import (RoadNode, RoadEdge, Hospital, Ambulance,
+                               EmergencyRequest)
 from app.dsa.geo import haversine_km
 
 # --- 1. Road network layout -------------------------------------------------
@@ -61,7 +65,27 @@ AMBULANCES = [
 ]
 
 
+def create_tables():
+    """Create any missing tables from the SQLAlchemy models.
+
+    Until v1.2 the schema existed ONLY in the developer's local database --
+    it had been typed into psql by hand and was never expressed in code. A
+    fresh clone could not run: seed_data.py inserted into tables that nothing
+    created, failing with 'relation "road_edges" does not exist'.
+
+    models.py already describes every table, so create_all() is the whole fix.
+    It is safe to run repeatedly: existing tables are left untouched.
+
+    NOTE: create_all does NOT alter existing tables. If you add a column to a
+    model, an already-created table will not gain it -- that needs a migration
+    tool (Alembic), which this project does not use.
+    """
+    Base.metadata.create_all(engine)
+    print(f"Schema ready: {', '.join(sorted(Base.metadata.tables))}")
+
+
 def seed():
+    create_tables()
     db = SessionLocal()
     try:
         # Wipe everything and reset id counters so ids are predictable (1, 2, 3...).

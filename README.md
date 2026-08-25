@@ -45,29 +45,35 @@ usual 8000/5173, which are taken by other services on the development machine.
 If you change them, update `frontend/src/api/client.js` and `ALLOWED_ORIGINS`
 in `backend/app/main.py` together, or the browser will block every request.
 
-### 1. Database
+### 1. Backend and database
 
 ```bash
 createdb ambulance_router          # first time only
+
 cd backend
-python seed_data.py                # builds the road network and demo data
-```
-
-`seed_data.py` is **destructive and idempotent**: it truncates every table and
-rebuilds, so running it twice gives the same result. It also wipes any emergency
-requests created through the API.
-
-### 2. Backend
-
-```bash
-cd backend
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+
+python seed_data.py                # creates the tables AND seeds demo data
 uvicorn app.main:app --reload --port 8001
 ```
 
+`seed_data.py` creates any missing tables from the SQLAlchemy models before
+seeding, so an empty database is all it needs. It is **destructive and
+idempotent**: it truncates every table and rebuilds, so running it twice gives
+the same result — including wiping any emergency requests made through the API.
+
+> Verified end to end on an empty database and in a clean virtualenv: the
+> commands above are the complete setup, with nothing to run by hand in `psql`.
+
+**Schema changes:** `create_all()` creates missing *tables* but never alters
+existing ones. If you add a column to a model, an already-created table will not
+gain it — this project has no migration tool (no Alembic), so either drop and
+recreate the database or `ALTER TABLE` by hand.
+
 Interactive API docs: <http://localhost:8001/docs>
 
-### 3. Frontend
+### 2. Frontend
 
 ```bash
 cd frontend
@@ -75,14 +81,15 @@ npm install
 npm run dev                        # http://localhost:5174
 ```
 
-### 4. Tests
+### 3. Tests
 
 ```bash
 cd backend
 python tests/test_dijkstra.py      # 9
 python tests/test_astar.py         # 6
 python tests/test_heap_ranking.py  # 10
-python tests/test_geo.py           # 14   -> 39 total
+python tests/test_geo.py           # 14
+python tests/test_priority_queue.py # 12  -> 51 total
 ```
 
 The algorithm tests use hand-built graphs and need no database or server —
@@ -105,6 +112,7 @@ that is the point of keeping `app/dsa/` free of any framework imports.
 | `GET` | `/ambulances` | All ambulances |
 | `GET` | `/ambulances/live` | Simulated live positions |
 | `GET` | `/admin/overview` | Dashboard statistics |
+| `GET` | `/queue` | Triage queue, in service order |
 
 ---
 
@@ -118,8 +126,8 @@ backend/
     models/     SQLAlchemy ORM models
     schemas/    Pydantic request/response validation
     graph_loader.py   Shared road-network loading
-  tests/        39 algorithm tests
-  seed_data.py  Rebuilds the simulated road network and demo data
+  tests/        51 algorithm tests
+  seed_data.py  Creates the schema + rebuilds the simulated road network
 
 frontend/
   src/
@@ -141,9 +149,16 @@ survive swapping either one out.
 
 Stated deliberately rather than hidden:
 
-- Simulated coordinates and a synthetic 4×4 road grid — no real map data.
+- **The road network is synthetic, but the map tiles are real.** The 16 nodes sit
+  on a perfect 0.02° lattice over Gurugram, so every "road" is a ruler-straight
+  line between grid points and drawn routes visibly cross real buildings. The
+  algorithms are genuine and the answers are correct *for this simulated city* —
+  they are not navigable directions for the real one. Importing real
+  OpenStreetMap road data would fix this without changing any algorithm.
 - ETA assumes a constant 40 km/h with no traffic model.
 - Live positions are interpolated from elapsed time, not GPS.
 - Ambulance dispatch has no locking; concurrent requests could race.
 - The computed route is not persisted, so it is recomputed on read.
-- No triage priority queue yet — requests are handled first-come, first-served.
+- Triage uses a fixed aging rate (10 min per severity level) rather than a
+  clinically derived one.
+- No database migrations — schema changes need a manual `ALTER TABLE`.
