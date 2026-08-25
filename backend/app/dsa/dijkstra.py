@@ -1,6 +1,6 @@
 import heapq
  
-def dijkstra(graph, source, dest):
+def dijkstra(graph, source, dest, stats=None):
     distances = {node: float('inf') for node in graph.adj}
     distances[source] = 0
     prev = {node: None for node in graph.adj}
@@ -25,6 +25,9 @@ def dijkstra(graph, source, dest):
                 prev[neighbor] = curr_node
                 heapq.heappush(pq, (new_dist, neighbor))
  
+    if stats is not None:
+        stats["nodes_expanded"] = len(visited)
+
     # reconstruct path
     path = []
     node = dest
@@ -39,7 +42,7 @@ def dijkstra(graph, source, dest):
     return path, distances[dest]
 
 
-def dijkstra_all(graph, source):
+def dijkstra_all(graph, source, stats=None):
     """Shortest distance from source to EVERY node in the graph.
 
     Same algorithm as dijkstra() above, with one deliberate difference: there is
@@ -73,6 +76,9 @@ def dijkstra_all(graph, source):
                 distances[neighbor] = new_dist
                 prev[neighbor] = curr_node
                 heapq.heappush(pq, (new_dist, neighbor))
+
+    if stats is not None:
+        stats["nodes_expanded"] = len(visited)
 
     return distances, prev
 
