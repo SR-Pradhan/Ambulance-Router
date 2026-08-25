@@ -16,3 +16,16 @@ class NearbyHospitalsQuery(BaseModel):
                        description="Patient longitude, -180 to 180")
     top_k: int = Field(3, ge=1, le=50,
                        description="How many hospitals to return (1-50)")
+
+
+class BedUpdate(BaseModel):
+    """Body for PATCH /hospitals/{id}/beds.
+
+    Only a lower bound is enforced here. The upper bound (beds must not exceed
+    the hospital's total) is a CROSS-FIELD rule that depends on a database row,
+    which Pydantic cannot see -- so it is checked in the endpoint and returned
+    as a 400.
+    """
+
+    available_beds: int = Field(..., ge=0,
+                                description="Free beds; cannot exceed total_beds")

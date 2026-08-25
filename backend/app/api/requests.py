@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models.models import RoadNode, RoadEdge, Hospital, Ambulance, EmergencyRequest
+from app.models.models import Hospital, Ambulance, EmergencyRequest
+from app.graph_loader import load_road_network
 from app.schemas.requests import EmergencyRequestCreate
-from app.dsa.graph import Graph
 from app.dsa.dijkstra import dijkstra_all, reconstruct_path
 from app.dsa.geo import snap_to_node
 from app.dsa.heap_ranking import rank_hospitals, rank_by_distance
@@ -26,11 +26,8 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float):
 
     Returns a result dict, or None if no hospital with free beds is reachable.
     """
-    # 1. Load the road network.
-    coords = {n.id: (n.lat, n.lng) for n in db.query(RoadNode).all()}
-    graph = Graph()
-    for e in db.query(RoadEdge).all():
-        graph.add_edge(e.from_node_id, e.to_node_id, e.weight)
+    # 1. Load the road network (shared loader - see app/graph_loader.py).
+    graph, coords = load_road_network(db)
 
     if not coords:
         return None
@@ -223,4 +220,93 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
             "status": vehicle.status,
         } if vehicle else None,
         "route": result["route"] if result else None,
+    }
+
+
+@router.get("/requests")
+def list_requests(db: Session = Depends(get_db)):
+    """Every emergency request, newest first. Feeds the admin dashboard."""
+    rows = db.query(EmergencyRequest).order_by(EmergencyRequest.id.desc()).all()
+    hospitals = {h.id: h.name for h in db.query(Hospital).all()}
+
+    return {
+        "count": len(rows),
+        "by_status": {
+            status: sum(1 for r in rows if r.status == status)
+            for status in ("pending", "en_route", "completed")
+        },
+        "requests": [
+            {
+                "id": r.id,
+                "patient_lat": r.patient_lat,
+                "patient_lng": r.patient_lng,
+                "status": r.status,
+                "assigned_hospital_id": r.assigned_hospital_id,
+                "assigned_hospital_name": hospitals.get(r.assigned_hospital_id),
+                "assigned_ambulance_id": r.assigned_ambulance_id,
+                "created_at": r.created_at,
+            }
+            for r in rows
+        ],
+    }
+
+
+@router.patch("/requests/{request_id}/complete")
+def complete_request(request_id: int, db: Session = Depends(get_db)):
+    """Finish a trip: free the ambulance and park it at the hospital.
+
+    This closes the loop. Before it existed, every dispatch permanently consumed
+    an ambulance and the pool drained to nothing after two requests.
+
+    Moving the ambulance to the hospital is deliberate, not cosmetic: it is
+    genuinely where the vehicle ends up, so the next dispatch measures distance
+    from its real position rather than from a stale depot.
+
+    Idempotent -- completing an already-completed request is a no-op, not an
+    error, so a double-clicked dashboard button cannot corrupt anything.
+    """
+    emergency = db.query(EmergencyRequest).filter(
+        EmergencyRequest.id == request_id
+    ).first()
+    if emergency is None:
+        raise HTTPException(status_code=404,
+                            detail=f"Request {request_id} not found")
+
+    if emergency.status == "completed":
+        return {
+            "request_id": emergency.id,
+            "status": emergency.status,
+            "changed": False,
+            "detail": "Request was already completed.",
+        }
+
+    freed_ambulance = None
+    if emergency.assigned_ambulance_id is not None:
+        vehicle = db.query(Ambulance).filter(
+            Ambulance.id == emergency.assigned_ambulance_id
+        ).first()
+        if vehicle:
+            hospital = db.query(Hospital).filter(
+                Hospital.id == emergency.assigned_hospital_id
+            ).first()
+            if hospital:
+                vehicle.current_lat = hospital.latitude
+                vehicle.current_lng = hospital.longitude
+            vehicle.status = "available"
+            freed_ambulance = {
+                "id": vehicle.id,
+                "status": vehicle.status,
+                "current_lat": vehicle.current_lat,
+                "current_lng": vehicle.current_lng,
+            }
+
+    emergency.status = "completed"
+    db.commit()
+    db.refresh(emergency)
+
+    return {
+        "request_id": emergency.id,
+        "status": emergency.status,
+        "changed": True,
+        "freed_ambulance": freed_ambulance,
     }
