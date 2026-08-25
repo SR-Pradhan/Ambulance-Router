@@ -119,3 +119,13 @@ td.actions button { padding: 3px 9px; font-size: 13px; }
   font-size: 17px; box-shadow: 0 2px 6px rgba(0,0,0,.4);
 }
 .leaflet-popup-content { font-size: 13px; }
+
+/* Triage severity tags */
+.tag.sev-critical { background: rgba(239,83,80,.2); color: var(--bad); }
+.tag.sev-urgent   { background: rgba(255,167,38,.2); color: var(--warn); }
+.tag.sev-standard { background: #2a303c; color: var(--muted); }
+
+select {
+  background: #0d1016; border: 1px solid var(--border); color: var(--text);
+  padding: 8px; border-radius: 6px; width: 100%;
+}

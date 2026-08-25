@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -8,6 +10,7 @@ from app.schemas.requests import EmergencyRequestCreate
 from app.dsa.dijkstra import dijkstra_all, reconstruct_path
 from app.dsa.geo import snap_to_node
 from app.dsa.heap_ranking import rank_hospitals, rank_by_distance
+from app.dsa.priority_queue import PriorityQueue, triage_score
 
 router = APIRouter()
 
@@ -129,6 +132,109 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float):
     }
 
 
+def waiting_queue(db: Session, now=None):
+    """Build the triage queue from every request still waiting for an ambulance.
+
+    The queue is DERIVED from the database on demand, never stored. Same
+    philosophy as live tracking: there is no long-lived in-memory heap to fall
+    out of sync with the database, to lose on restart, or to corrupt if two
+    workers disagree. Rebuilding costs O(n log n) on a handful of rows.
+
+    Returns a PriorityQueue of request rows, most urgent first.
+    """
+    now = now or datetime.now()
+
+    pending = db.query(EmergencyRequest).filter(
+        EmergencyRequest.status == "pending",
+        EmergencyRequest.assigned_ambulance_id.is_(None),
+    ).all()
+
+    pq = PriorityQueue()
+    for req in pending:
+        waited = ((now - req.created_at).total_seconds() / 60.0
+                  if req.created_at else 0.0)
+        # Tie-break on id so equal-priority patients keep arrival order.
+        pq.push(triage_score(req.severity, waited), req.id, req)
+
+    return pq
+
+
+def dispatch_waiting(db: Session):
+    """Give every free ambulance to the most urgent waiting patient.
+
+    Called after a request is created AND after a trip completes, which is what
+    makes the queue meaningful rather than decorative: when an ambulance frees
+    up it goes to whoever needs it most, not to whoever asked first.
+
+    Returns the list of requests that just got an ambulance.
+    """
+    queue = waiting_queue(db)
+    dispatched = []
+
+    while not queue.is_empty():
+        # Any ambulance free? Re-checked each round because each assignment
+        # consumes one.
+        if not db.query(Ambulance).filter(Ambulance.status == "available").first():
+            break
+
+        req = queue.pop()
+        result = compute_best_route(db, req.patient_lat, req.patient_lng)
+        if result is None or result["ambulance"] is None:
+            continue  # no reachable hospital with beds, or no usable ambulance
+
+        vehicle = db.query(Ambulance).filter(
+            Ambulance.id == result["ambulance"]["id"]
+        ).first()
+        if vehicle is None or vehicle.status != "available":
+            continue
+
+        req.assigned_hospital_id = result["hospital"]["id"]
+        req.assigned_ambulance_id = vehicle.id
+        req.status = "en_route"
+        vehicle.status = "busy"
+        dispatched.append(req)
+
+    if dispatched:
+        db.commit()
+    return dispatched
+
+
+@router.get("/queue")
+def get_queue(db: Session = Depends(get_db)):
+    """The triage queue right now, in the order patients will be served.
+
+    Shows the score so the ordering is inspectable: severity sets the starting
+    position and waiting drags it towards the front.
+    """
+    now = datetime.now()
+    queue = waiting_queue(db, now)
+    ordered = queue.drain()
+
+    return {
+        "waiting": len(ordered),
+        "aging_minutes_per_level": 10.0,
+        "queue": [
+            {
+                "position": i + 1,
+                "request_id": r.id,
+                "severity": r.severity,
+                "waited_minutes": round(
+                    (now - r.created_at).total_seconds() / 60.0, 1
+                ) if r.created_at else 0.0,
+                "score": round(triage_score(
+                    r.severity,
+                    (now - r.created_at).total_seconds() / 60.0 if r.created_at else 0.0
+                ), 3),
+                "patient_lat": r.patient_lat,
+                "patient_lng": r.patient_lng,
+            }
+            for i, r in enumerate(ordered)
+        ],
+        "note": "Lower score is served first. Waiting lowers the score, so no "
+                "patient can be starved by a stream of more urgent arrivals.",
+    }
+
+
 @router.post("/requests")
 def create_request(payload: EmergencyRequestCreate, db: Session = Depends(get_db)):
     """Create an emergency request: choose a hospital, route to it, store it."""
@@ -140,37 +246,54 @@ def create_request(payload: EmergencyRequestCreate, db: Session = Depends(get_db
             detail="No hospital with available beds is reachable from this location.",
         )
 
-    # Dispatch the nearest available ambulance, if there is one. A request with
-    # no ambulance is still worth creating -- the hospital choice stands and the
-    # request simply waits, which is why this is not an error.
-    ambulance = result["ambulance"]
-
+    # The request is created as PENDING and joins the triage queue. It does not
+    # grab an ambulance directly -- dispatch_waiting decides who gets the next
+    # free vehicle, so a critical patient already waiting is served before a
+    # standard one that just arrived.
     emergency = EmergencyRequest(
         patient_lat=payload.patient_lat,
         patient_lng=payload.patient_lng,
+        severity=payload.severity,
         assigned_hospital_id=result["hospital"]["id"],
-        assigned_ambulance_id=ambulance["id"] if ambulance else None,
-        # "en_route" once an ambulance is actually on its way; otherwise it
-        # stays "pending" until one frees up.
-        status="en_route" if ambulance else "pending",
+        assigned_ambulance_id=None,
+        status="pending",
     )
     db.add(emergency)
-
-    if ambulance:
-        # Take the ambulance out of the available pool so the next request
-        # cannot be given the same one.
-        vehicle = db.query(Ambulance).filter(Ambulance.id == ambulance["id"]).first()
-        if vehicle:
-            vehicle.status = "busy"
-
     db.commit()
     db.refresh(emergency)
+
+    # Now run the queue. This may assign an ambulance to THIS request, or to a
+    # more urgent one that was already waiting.
+    dispatch_waiting(db)
+    db.refresh(emergency)
+
+    # Report what actually happened, not what compute_best_route proposed --
+    # the queue may have given that ambulance to someone else.
+    assigned = None
+    if emergency.assigned_ambulance_id is not None:
+        vehicle = db.query(Ambulance).filter(
+            Ambulance.id == emergency.assigned_ambulance_id
+        ).first()
+        if vehicle:
+            assigned = {
+                "id": vehicle.id,
+                "current_lat": vehicle.current_lat,
+                "current_lng": vehicle.current_lng,
+            }
+
+    queued_ahead = [
+        r.id for r in waiting_queue(db).drain() if r.id != emergency.id
+    ] if emergency.status == "pending" else []
 
     return {
         "request_id": emergency.id,
         "status": emergency.status,
+        "severity": emergency.severity,
         "created_at": emergency.created_at,
         **result,
+        "ambulance": assigned,
+        "queued_behind": queued_ahead,
+        "total_eta_minutes": result["total_eta_minutes"] if assigned else None,
     }
 
 
@@ -241,6 +364,7 @@ def list_requests(db: Session = Depends(get_db)):
                 "patient_lat": r.patient_lat,
                 "patient_lng": r.patient_lng,
                 "status": r.status,
+                "severity": r.severity,
                 "assigned_hospital_id": r.assigned_hospital_id,
                 "assigned_hospital_name": hospitals.get(r.assigned_hospital_id),
                 "assigned_ambulance_id": r.assigned_ambulance_id,
@@ -304,9 +428,18 @@ def complete_request(request_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(emergency)
 
+    # An ambulance just became free -- hand it to the most urgent waiting
+    # patient. This is where the priority queue earns its place.
+    newly_dispatched = [
+        {"request_id": r.id, "severity": r.severity,
+         "assigned_ambulance_id": r.assigned_ambulance_id}
+        for r in dispatch_waiting(db)
+    ]
+
     return {
         "request_id": emergency.id,
         "status": emergency.status,
         "changed": True,
         "freed_ambulance": freed_ambulance,
+        "dispatched_from_queue": newly_dispatched,
     }

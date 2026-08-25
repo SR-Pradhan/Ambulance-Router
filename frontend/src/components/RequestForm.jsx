@@ -1,7 +1,14 @@
 import { useState } from "react";
 
+const SEVERITIES = [
+  { value: "critical", label: "Critical", hint: "life-threatening" },
+  { value: "urgent", label: "Urgent", hint: "serious, not immediately fatal" },
+  { value: "standard", label: "Standard", hint: "stable" },
+];
+
 export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) {
   const [error, setError] = useState(null);
+  const [severity, setSeverity] = useState("standard");
 
   // The seeded road grid spans 28.44-28.50 lat, 77.00-77.06 lng. Outside that
   // the nearest road node is far away and the route looks nonsensical, so this
@@ -16,7 +23,7 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
       return;
     }
     try {
-      await onSubmit(patient.lat, patient.lng);
+      await onSubmit(patient.lat, patient.lng, severity);
     } catch (err) {
       setError(err.message);
     }
@@ -48,6 +55,19 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
               onPickPatient(patient?.lat ?? 28.44, parseFloat(e.target.value))
             }
           />
+        </label>
+      </div>
+
+      <div className="row">
+        <label>
+          Severity
+          <select value={severity} onChange={(e) => setSeverity(e.target.value)}>
+            {SEVERITIES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label} — {s.hint}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 

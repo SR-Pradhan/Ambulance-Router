@@ -39,4 +39,6 @@ class EmergencyRequest(Base):
     assigned_ambulance_id = Column(Integer, ForeignKey("ambulances.id"))
     assigned_hospital_id = Column(Integer, ForeignKey("hospitals.id"))
     status = Column(String, nullable=False, default="pending")
+    # Triage severity: critical | urgent | standard. Drives the priority queue.
+    severity = Column(String, nullable=False, default="standard")
     created_at = Column(TIMESTAMP, server_default=func.now())

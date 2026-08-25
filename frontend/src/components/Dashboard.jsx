@@ -10,7 +10,7 @@ function Stat({ label, value, sub, tone }) {
   );
 }
 
-export default function Dashboard({ overview, hospitals, requests, onUpdateBeds, onComplete }) {
+export default function Dashboard({ overview, hospitals, requests, queue, onUpdateBeds, onComplete }) {
   const [error, setError] = useState(null);
 
   const run = async (fn) => {
@@ -50,6 +50,11 @@ export default function Dashboard({ overview, hospitals, requests, onUpdateBeds,
           tone={a.available === 0 ? "bad" : ""}
         />
         <Stat label="En route" value={r.en_route} />
+        <Stat
+          label="In triage queue"
+          value={queue?.waiting ?? 0}
+          tone={queue?.waiting > 0 ? "warn" : ""}
+        />
         <Stat
           label="Awaiting ambulance"
           value={r.awaiting_ambulance}
@@ -127,12 +132,57 @@ export default function Dashboard({ overview, hospitals, requests, onUpdateBeds,
       </div>
 
       <div className="panel">
+        <h2>
+          Triage queue{" "}
+          {queue?.waiting > 0 && <span className="badge">{queue.waiting}</span>}
+        </h2>
+        <p className="note">
+          Patients waiting for an ambulance, in the order they will be served.
+          Lower score goes first: severity sets the starting position, and every{" "}
+          {queue?.aging_minutes_per_level ?? 10} minutes of waiting improves it by
+          one full level — so no patient can be starved by a stream of more urgent
+          arrivals.
+        </p>
+        {queue?.queue?.length ? (
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Request</th>
+                <th>Severity</th>
+                <th>Waited</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {queue.queue.map((q) => (
+                <tr key={q.request_id}>
+                  <td>{q.position}</td>
+                  <td>{q.request_id}</td>
+                  <td>
+                    <span className={`tag sev-${q.severity}`}>{q.severity}</span>
+                  </td>
+                  <td>{q.waited_minutes} min</td>
+                  <td>{q.score.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="muted">
+            Nobody is waiting — every request has an ambulance.
+          </p>
+        )}
+      </div>
+
+      <div className="panel">
         <h2>Emergency requests</h2>
         <table>
           <thead>
             <tr>
               <th>#</th>
               <th>Status</th>
+              <th>Severity</th>
               <th>Hospital</th>
               <th>Ambulance</th>
               <th></th>
@@ -144,6 +194,9 @@ export default function Dashboard({ overview, hospitals, requests, onUpdateBeds,
                 <td>{req.id}</td>
                 <td>
                   <span className={`tag ${req.status}`}>{req.status}</span>
+                </td>
+                <td>
+                  <span className={`tag sev-${req.severity}`}>{req.severity}</span>
                 </td>
                 <td>{req.assigned_hospital_name || "—"}</td>
                 <td>{req.assigned_ambulance_id ?? "—"}</td>
@@ -158,7 +211,7 @@ export default function Dashboard({ overview, hospitals, requests, onUpdateBeds,
             ))}
             {requests.length === 0 && (
               <tr>
-                <td colSpan="5" className="muted">
+                <td colSpan="6" className="muted">
                   No requests yet.
                 </td>
               </tr>

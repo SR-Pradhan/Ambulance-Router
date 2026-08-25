@@ -16,6 +16,7 @@ export default function App() {
   const [hospitals, setHospitals] = useState([]);
   const [requests, setRequests] = useState([]);
   const [overview, setOverview] = useState(null);
+  const [queue, setQueue] = useState(null);
   const [live, setLive] = useState([]);
   const [connError, setConnError] = useState(null);
 
@@ -23,14 +24,16 @@ export default function App() {
   // never disagree about the state of the world.
   const refresh = useCallback(async () => {
     try {
-      const [h, r, o] = await Promise.all([
+      const [h, r, o, q] = await Promise.all([
         api.listHospitals(),
         api.listRequests(),
         api.overview(),
+        api.queue(),
       ]);
       setHospitals(h.hospitals);
       setRequests(r.requests);
       setOverview(o);
+      setQueue(q);
       setConnError(null);
     } catch (err) {
       setConnError(err.message);
@@ -71,10 +74,10 @@ export default function App() {
     if (Number.isFinite(lat) && Number.isFinite(lng)) setPatient({ lat, lng });
   };
 
-  const createRequest = async (lat, lng) => {
+  const createRequest = async (lat, lng, severity) => {
     setBusy(true);
     try {
-      const created = await api.createRequest(lat, lng);
+      const created = await api.createRequest(lat, lng, severity);
       setResult(created);
       await refresh();
     } finally {
@@ -122,8 +125,8 @@ export default function App() {
 
       {connError && (
         <p className="error banner">
-          Cannot reach the API at localhost:8000 — {connError}. Is the backend
-          running (<code>uvicorn app.main:app --reload</code>)?
+          Cannot reach the API at localhost:8001 — {connError}. Is the backend
+          running (<code>uvicorn app.main:app --reload --port 8001</code>)?
         </p>
       )}
 
@@ -150,6 +153,7 @@ export default function App() {
           overview={overview}
           hospitals={hospitals}
           requests={requests}
+          queue={queue}
           onUpdateBeds={updateBeds}
           onComplete={completeRequest}
         />
