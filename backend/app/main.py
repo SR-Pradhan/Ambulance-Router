@@ -1,9 +1,10 @@
 from fastapi import FastAPI
-from app.api import route
+from app.api import route, hospitals
 
 app = FastAPI(title="Ambulance Route Optimizer")
 
 app.include_router(route.router)
+app.include_router(hospitals.router)
 
 @app.get("/")
 def root():
