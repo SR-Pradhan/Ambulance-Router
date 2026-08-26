@@ -59,16 +59,26 @@ export default function ResultsPanel({ result }) {
       </div>
 
       <dl className="detail-list">
+        {/* These describe the SECOND leg only. Labelling them plain "Route"
+            and "Road distance" read as though they covered the whole journey,
+            which made the dispatch look like it went straight to the hospital
+            without collecting anyone. */}
+        {ambulance?.pickup_path && (
+          <div>
+            <dt>Leg 1, to the patient</dt>
+            <dd>{ambulance.pickup_path.join(" to ")}</dd>
+          </div>
+        )}
         <div>
-          <dt>Route</dt>
+          <dt>Leg 2, patient to hospital</dt>
           <dd>{route.path?.join(" to ") || "Not available"}</dd>
         </div>
         <div>
-          <dt>Road distance</dt>
+          <dt>Distance carrying the patient</dt>
           <dd>{route.distance_km} km</dd>
         </div>
         <div>
-          <dt>Travel time</dt>
+          <dt>Time carrying the patient</dt>
           <dd>{route.eta_minutes} min including traffic</dd>
         </div>
         {result.required_facility && (
