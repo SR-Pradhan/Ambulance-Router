@@ -38,7 +38,10 @@ stream of critical arrivals still gets served.
 
 📍 **Live tracking with no background jobs.** An ambulance's position is derived from
 elapsed time along its computed route, so it is consistent on every request and
-survives a restart.
+survives a restart. No GPS is involved and none is claimed.
+
+🎨 **Built to be read.** Light and dark themes, a map legend, skeleton loading
+states, and WCAG AA contrast throughout. No status is signalled by colour alone.
 
 ---
 
@@ -66,8 +69,15 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 python seed_data.py
+
+export ADMIN_KEY=local-dev-key
 uvicorn app.main:app --reload --port 8001
 ```
+
+> 🔐 `ADMIN_KEY` gates the two destructive endpoints. **Without it they return
+> 503** — the check fails closed on purpose, so a missing key is loud rather
+> than silently leaving them open. Any value works locally; you type the same
+> one into the dashboard's **Unlock admin** button.
 
 `seed_data.py` creates the tables from the SQLAlchemy models, then seeds the **real
 Gurugram road network** from cached OpenStreetMap data in `backend/data/` (540 KB,
@@ -116,15 +126,18 @@ the point of keeping `app/dsa/` free of any framework imports.
 | `GET` | `/route?source=&dest=&algo=&hour=` | Fastest route. `algo=dijkstra\|astar\|compare` |
 | `GET` | `/hospitals/nearby?lat=&lng=&top_k=` | Rank hospitals by straight-line distance |
 | `GET` | `/hospitals` | All hospitals with capacity and units |
-| `PATCH` | `/hospitals/{id}/beds` | Update available beds |
+| `PATCH` | `/hospitals/{id}/beds` | 🔐 Update available beds |
 | `POST` | `/requests` | Create an emergency request and dispatch |
 | `GET` | `/requests` | List all requests |
 | `GET` | `/requests/{id}` | One request with its route |
-| `PATCH` | `/requests/{id}/complete` | Finish a trip, free the ambulance |
+| `PATCH` | `/requests/{id}/complete` | 🔐 Finish a trip, free the ambulance |
 | `GET` | `/queue` | Triage queue, in service order |
 | `GET` | `/ambulances` | All ambulances |
 | `GET` | `/ambulances/live` | Simulated live positions |
 | `GET` | `/admin/overview` | Dashboard statistics |
+
+🔐 marks the two endpoints requiring the `X-Admin-Key` header. Everything else,
+including creating a request, is public so the live demo works for visitors.
 
 ---
 
@@ -142,6 +155,7 @@ backend/
       geo.py           haversine, snapping, path interpolation
       traffic.py       congestion model, distance to travel time
     api/          🔌 Thin FastAPI routers: fetch data, call dsa/, format JSON
+      deps.py          shared dependencies, including the admin guard
     models/       🗃️ SQLAlchemy ORM models
     schemas/      ✅ Pydantic request and response validation
     facilities.py 🏥 Hospital capability matching
@@ -160,6 +174,7 @@ frontend/src/
     RequestForm.jsx  📝 Create an emergency request
     ResultsPanel.jsx 📊 Chosen hospital, route, ETA
     Dashboard.jsx    🎛️ Capacity management, triage queue, requests
+    AdminLock.jsx    🔐 Unlock control for the gated actions
     ThemeToggle.jsx  🌓 Light, dark and system themes
 ```
 
