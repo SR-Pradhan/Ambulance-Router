@@ -13,6 +13,8 @@ function Stat({ label, value, sub, tone, subTone }) {
   );
 }
 
+const UNIT_LABEL = { icu: "ICU", trauma: "Trauma", cardiac: "Cardiac" };
+
 const SEVERITY_CHIP = {
   critical: "chip chip-critical",
   urgent: "chip chip-warning",
@@ -161,7 +163,7 @@ export default function Dashboard({
           <table>
             <thead>
               <tr>
-                <th>Hospital</th>
+                <th className="col-grow">Hospital</th>
                 <th className="numeric">Free beds</th>
                 <th className="numeric">Total</th>
                 <th className="numeric">Occupancy</th>
@@ -173,7 +175,7 @@ export default function Dashboard({
             <tbody>
               {hospitals.map((hosp) => (
                 <tr key={hosp.id} className={hosp.accepting ? "" : "row-inactive"}>
-                  <td>{hosp.name}</td>
+                  <td className="col-grow">{hosp.name}</td>
                   <td className="numeric">
                     <input
                       className="bed-input"
@@ -197,7 +199,7 @@ export default function Dashboard({
                       <span className="unit-list">
                         {hosp.facilities.map((f) => (
                           <span key={f} className="unit">
-                            {f}
+                            {UNIT_LABEL[f] || f}
                           </span>
                         ))}
                       </span>
@@ -211,6 +213,7 @@ export default function Dashboard({
                     </span>
                   </td>
                   <td className="actions">
+                    <div className="row-actions">
                     <button
                       className="secondary small"
                       onClick={() => run(() => onUpdateBeds(hosp.id, 0))}
@@ -225,6 +228,7 @@ export default function Dashboard({
                     >
                       Reopen
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -255,7 +259,10 @@ export default function Dashboard({
                 <tr>
                   <th>Position</th>
                   <th>Request</th>
-                  <th>Severity</th>
+                  {/* Absorbs the slack so Position and Request stay tight on
+                      the left and the numeric columns stay tight on the right,
+                      instead of all five drifting apart. */}
+                  <th className="col-grow">Severity</th>
                   <th className="numeric">Waited</th>
                   <th className="numeric">Score</th>
                 </tr>
@@ -265,7 +272,7 @@ export default function Dashboard({
                   <tr key={q.request_id}>
                     <td>{q.position}</td>
                     <td>{q.request_id}</td>
-                    <td>
+                    <td className="col-grow">
                       <span className={SEVERITY_CHIP[q.severity] || "chip"}>
                         {q.severity}
                       </span>
@@ -298,7 +305,7 @@ export default function Dashboard({
                 <th>Request</th>
                 <th>Status</th>
                 <th>Severity</th>
-                <th>Hospital</th>
+                <th className="col-grow">Hospital</th>
                 <th>Ambulance</th>
                 <th>Actions</th>
               </tr>
@@ -317,9 +324,10 @@ export default function Dashboard({
                       {req.severity}
                     </span>
                   </td>
-                  <td>{req.assigned_hospital_name || "Not assigned"}</td>
+                  <td className="col-grow">{req.assigned_hospital_name || "Not assigned"}</td>
                   <td>{req.assigned_ambulance_id ?? "None"}</td>
                   <td className="actions">
+                    <div className="row-actions">
                     {req.status !== "completed" && (
                       <button
                         className="secondary small"
@@ -330,6 +338,7 @@ export default function Dashboard({
                         Complete
                       </button>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}

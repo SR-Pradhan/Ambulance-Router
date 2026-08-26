@@ -141,7 +141,7 @@ export default function ResultsPanel({ result }) {
             <table>
               <thead>
                 <tr>
-                  <th>Hospital</th>
+                  <th className="col-grow">Hospital</th>
                   <th className="numeric">Minutes</th>
                   <th className="numeric">Road km</th>
                   <th className="numeric">Beds</th>
@@ -151,7 +151,7 @@ export default function ResultsPanel({ result }) {
               <tbody>
                 {alternatives.map((a) => (
                   <tr key={a.id}>
-                    <td>{a.name}</td>
+                    <td className="col-grow">{a.name}</td>
                     <td className="numeric">{a.travel_minutes}</td>
                     <td className="numeric">{a.distance}</td>
                     <td className="numeric">

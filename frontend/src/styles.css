@@ -321,7 +321,10 @@ tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: var(--surface-sunken); }
 
 td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; }
-td.actions { display: flex; gap: 6px; align-items: center; }
+/* A <td> must stay display:table-cell. Making it a flex container removes it
+   from the table layout algorithm, which broke this column's row borders and
+   its vertical alignment. The flex layout goes on an inner wrapper instead. */
+td.actions .row-actions { display: flex; gap: 6px; align-items: center; }
 .row-inactive td { color: var(--ink-muted); }
 
 .bed-input { width: 74px; padding: 5px 8px; font-size: 13px; text-align: right; }
@@ -510,8 +513,14 @@ td.actions { display: flex; gap: 6px; align-items: center; }
 .stat-sub.is-critical { color: var(--critical); font-weight: 500; }
 
 /* Keep identifier columns narrow so tables do not spread thin */
+/* Column widths.
+   Without this every column shares the leftover width equally, which on a wide
+   screen strands short values like "None" or a status chip in the middle of a
+   300px column. Instead: size every column to its CONTENT, and let one
+   designated column (.col-grow, the name) absorb all remaining space. */
 .table-wrap table { table-layout: auto; }
-th:first-child, td:first-child { width: 1%; white-space: nowrap; }
+th, td { width: 1%; white-space: nowrap; }
+th.col-grow, td.col-grow { width: 100%; white-space: normal; }
 
 /* ---------------------------------------------------------------------------
    Dark theme
@@ -646,7 +655,8 @@ th:first-child, td:first-child { width: 1%; white-space: nowrap; }
 }
 
 /* Facility badges */
-.unit-list { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+/* Chips stay on one line: wrapping made rows three times taller. */
+.unit-list { display: inline-flex; gap: 4px; flex-wrap: nowrap; }
 
 .unit {
   font-size: 11px;
@@ -655,7 +665,6 @@ th:first-child, td:first-child { width: 1%; white-space: nowrap; }
   border-radius: 4px;
   background: var(--accent-tint);
   color: var(--accent);
-  text-transform: capitalize;
 }
 
 /* --- Map legend ----------------------------------------------------------- */
