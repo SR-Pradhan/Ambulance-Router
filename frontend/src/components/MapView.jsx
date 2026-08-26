@@ -125,6 +125,10 @@ function Legend({ movingCount }) {
         <span className="legend-line to-hospital" />
         <span>Carrying to hospital</span>
       </div>
+      <div className="legend-row">
+        <span className="legend-line off-network" />
+        <span>Last stretch, not routed</span>
+      </div>
       <div className="legend-live">
         <span className={`live-dot ${movingCount > 0 ? "is-live" : ""}`} />
         {movingCount > 0
@@ -239,6 +243,41 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
                         color: "#1565c0",
                         weight: 4,
                         opacity: a.phase === "to_patient" ? 0.3 : 0.85,
+                      }}
+                    />
+                  )}
+                  {/* The last stretch, which the model does NOT route.
+                      Patients and hospitals sit at real addresses; the graph
+                      holds only road junctions, and only arterial ones, so the
+                      nearest junction to a patient can be a few hundred metres
+                      away. Drawing that gap dashed is the honest presentation:
+                      it shows where routing stops and the unmodelled part
+                      begins, instead of leaving the line to end in mid-air
+                      looking like a bug. Navigation apps do the same when a
+                      destination sits off the road network. */}
+                  {a.patient && a.route[a.pickup_index ?? 0] && (
+                    <Polyline
+                      positions={[
+                        [a.route[a.pickup_index ?? 0].lat,
+                         a.route[a.pickup_index ?? 0].lng],
+                        [a.patient.lat, a.patient.lng],
+                      ]}
+                      pathOptions={{
+                        color: "#9ca3af", weight: 2,
+                        opacity: 0.9, dashArray: "4 6",
+                      }}
+                    />
+                  )}
+                  {a.hospital && a.route.length > 0 && (
+                    <Polyline
+                      positions={[
+                        [a.route[a.route.length - 1].lat,
+                         a.route[a.route.length - 1].lng],
+                        [a.hospital.lat, a.hospital.lng],
+                      ]}
+                      pathOptions={{
+                        color: "#9ca3af", weight: 2,
+                        opacity: 0.9, dashArray: "4 6",
                       }}
                     />
                   )}

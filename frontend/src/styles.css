@@ -844,3 +844,10 @@ th:first-child, td:first-child { width: 1%; white-space: nowrap; }
 .admin-lock { display: flex; align-items: center; gap: 9px; flex: none; }
 .admin-lock-form { display: flex; align-items: center; gap: 7px; }
 .admin-lock-form input { width: 170px; padding: 6px 10px; font-size: 13px; }
+
+/* The unmodelled last stretch between a road junction and a real address. */
+.legend-line.off-network {
+  background: repeating-linear-gradient(
+    90deg, var(--dot-neutral) 0 4px, transparent 4px 8px);
+  height: 2px;
+}

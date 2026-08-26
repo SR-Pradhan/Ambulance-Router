@@ -208,6 +208,10 @@ Stated deliberately rather than hidden:
   (433 junctions, 643 segments) and the 12 hospital names come from OpenStreetMap.
   Bed counts, specialist units, congestion figures and ambulance positions are invented.
 - 🚦 Congestion is derived from road class and time of day, not measured.
+- 📌 Only arterial roads are in the graph, so a patient snaps to a junction that
+  can be a few hundred metres from the actual pin. The map draws that last
+  stretch as a dashed line labelled "not routed" rather than pretending to
+  cover it.
 - 📡 Live positions are interpolated from elapsed time, not GPS.
 - 🔒 Admin actions (changing beds, completing a trip) are gated by a single
   shared key, not real accounts. It proves a request was *authorised*, not *who*
