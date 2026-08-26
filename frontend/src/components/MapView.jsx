@@ -207,15 +207,42 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
             // the map imperatively, so a wrapper element would inject a stray
             // DOM node into the map pane.
             <Fragment key={`a-${a.ambulance_id}`}>
+              {/* TWO polylines, not one.
+                  The journey has two legs with different meanings: driving to
+                  the patient, then carrying them to hospital. Drawing the whole
+                  path in a single colour chosen by the CURRENT phase repainted
+                  the pickup leg blue the moment the patient was collected,
+                  contradicting the legend. Splitting at the patient keeps each
+                  leg the colour the legend claims, for the whole journey. */}
               {moving && a.route?.length > 1 && (
-                <Polyline
-                  positions={a.route.map((p) => [p.lat, p.lng])}
-                  pathOptions={{
-                    color: a.phase === "to_patient" ? "#ef6c00" : "#1565c0",
-                    weight: 4,
-                    opacity: 0.7,
-                  }}
-                />
+                <>
+                  {a.route.slice(0, (a.pickup_index ?? 0) + 1).length > 1 && (
+                    <Polyline
+                      positions={a.route
+                        .slice(0, (a.pickup_index ?? 0) + 1)
+                        .map((p) => [p.lat, p.lng])}
+                      pathOptions={{
+                        color: "#ef6c00",
+                        weight: 4,
+                        /* The leg not currently being driven is faded, so the
+                           active one reads at a glance. */
+                        opacity: a.phase === "to_patient" ? 0.85 : 0.3,
+                      }}
+                    />
+                  )}
+                  {a.route.slice(a.pickup_index ?? 0).length > 1 && (
+                    <Polyline
+                      positions={a.route
+                        .slice(a.pickup_index ?? 0)
+                        .map((p) => [p.lat, p.lng])}
+                      pathOptions={{
+                        color: "#1565c0",
+                        weight: 4,
+                        opacity: a.phase === "to_patient" ? 0.3 : 0.85,
+                      }}
+                    />
+                  )}
+                </>
               )}
               <Marker
                 position={[a.lat, a.lng]}

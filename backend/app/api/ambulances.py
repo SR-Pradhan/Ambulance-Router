@@ -47,7 +47,7 @@ def _journey_coords(db, graph, coords, request, ambulance, hospital):
     transport_path, _transport_minutes = dijkstra(graph, p_node, h_node)
 
     if pickup_path is None or transport_path is None:
-        return None, 0.0, 0.0
+        return None, 0.0, 0.0, 0
 
     pickup_km = path_length_km(pickup_path, coords)
     transport_km = path_length_km(transport_path, coords)
@@ -60,7 +60,13 @@ def _journey_coords(db, graph, coords, request, ambulance, hospital):
     # segment and make the two legs look discontinuous.
     full = pickup_coords + transport_coords[1:]
 
-    return full, pickup_km, transport_km
+    # Index of the patient in the combined path. The two legs are drawn in
+    # different colours on the map, so the frontend has to know exactly where
+    # one ends and the other begins. Deriving it there (nearest waypoint to the
+    # patient) would be a guess; this is exact.
+    pickup_index = max(0, len(pickup_coords) - 1)
+
+    return full, pickup_km, transport_km, pickup_index
 
 
 @router.get("/ambulances")
@@ -116,7 +122,7 @@ def live_ambulances(db: Session = Depends(get_db)):
         if ambulance is None or hospital is None or req.created_at is None:
             continue
 
-        journey, pickup_km, transport_km = _journey_coords(
+        journey, pickup_km, transport_km, pickup_index = _journey_coords(
             db, graph, coords, req, ambulance, hospital
         )
         if not journey:
@@ -159,6 +165,8 @@ def live_ambulances(db: Session = Depends(get_db)):
                          "lat": hospital.latitude, "lng": hospital.longitude},
             "route": [{"lat": round(la, 6), "lng": round(ln, 6)}
                       for la, ln in journey],
+            # Where the pickup leg ends and the hospital leg begins.
+            "pickup_index": pickup_index,
         })
 
     # Everything else is parked at its home position.
