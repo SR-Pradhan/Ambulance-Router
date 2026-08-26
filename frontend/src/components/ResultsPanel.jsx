@@ -58,28 +58,40 @@ export default function ResultsPanel({ result }) {
         </div>
       </div>
 
-      <dl className="detail-list">
-        {/* These describe the SECOND leg only. Labelling them plain "Route"
-            and "Road distance" read as though they covered the whole journey,
-            which made the dispatch look like it went straight to the hospital
-            without collecting anyone. */}
+      {/* The journey as two legs, summarised.
+          Raw node ids ("182 to 347 to 186...") mean nothing to a reader, so
+          the summary leads with distance, time and a junction COUNT, and the
+          full path is tucked behind a disclosure for when it is actually
+          wanted. */}
+      <div className="journey">
         {ambulance?.pickup_path && (
-          <div>
-            <dt>Leg 1, to the patient</dt>
-            <dd>{ambulance.pickup_path.join(" to ")}</dd>
+          <div className="journey-leg">
+            <span className="journey-step">1</span>
+            <div>
+              <strong>Drive to the patient</strong>
+              <span className="sub">
+                {ambulance.distance} km · {ambulance.pickup_eta_minutes} min ·{" "}
+                {ambulance.pickup_path.length} junctions
+              </span>
+            </div>
           </div>
         )}
-        <div>
-          <dt>Leg 2, patient to hospital</dt>
-          <dd>{route.path?.join(" to ") || "Not available"}</dd>
+        <div className="journey-leg">
+          <span className="journey-step">{ambulance?.pickup_path ? 2 : 1}</span>
+          <div>
+            <strong>Carry the patient to hospital</strong>
+            <span className="sub">
+              {route.distance_km} km · {route.eta_minutes} min ·{" "}
+              {route.path?.length ?? 0} junctions
+            </span>
+          </div>
         </div>
+      </div>
+
+      <dl className="detail-list">
         <div>
-          <dt>Distance carrying the patient</dt>
-          <dd>{route.distance_km} km</dd>
-        </div>
-        <div>
-          <dt>Time carrying the patient</dt>
-          <dd>{route.eta_minutes} min including traffic</dd>
+          <dt>Units available</dt>
+          <dd>{hospital.facilities?.join(", ") || "general only"}</dd>
         </div>
         {result.required_facility && (
           <div>
@@ -87,21 +99,33 @@ export default function ResultsPanel({ result }) {
             <dd>{result.required_facility}</dd>
           </div>
         )}
-        <div>
-          <dt>Units available</dt>
-          <dd>{hospital.facilities?.join(", ") || "general only"}</dd>
-        </div>
         {ambulance && (
           <div>
             <dt>Ambulance</dt>
-            <dd>
-              {ambulance.distance != null
-                ? `${ambulance.id}, ${ambulance.distance} km away`
-                : ambulance.id}
-            </dd>
+            <dd>{ambulance.id}</dd>
           </div>
         )}
       </dl>
+
+      {(ambulance?.pickup_path || route.path) && (
+        <details className="path-detail">
+          <summary>Show the junctions used</summary>
+          {ambulance?.pickup_path && (
+            <p className="sub">
+              <strong>To the patient:</strong>{" "}
+              {/* Reversed: dijkstra_all runs FROM the patient, so this path is
+                  stored patient-first. The ambulance drives it the other way. */}
+              {[...ambulance.pickup_path].reverse().join(" to ")}
+            </p>
+          )}
+          <p className="sub">
+            <strong>To the hospital:</strong> {route.path?.join(" to ")}
+          </p>
+          <p className="note">
+            Numbers are road junction ids in the graph, not street names.
+          </p>
+        </details>
+      )}
 
       {!ambulance && (
         <p className="warn-text">
