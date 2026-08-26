@@ -38,6 +38,11 @@ then dispatches the nearest available ambulance and tracks it on a live map.
 
 ---
 
+## Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md). Database on Neon, backend on Render,
+frontend on Vercel, all free tier.
+
 ## Running it
 
 **Ports:** the backend runs on **8001** and the frontend on **5174** — not the

@@ -113,11 +113,41 @@ export default function App() {
       }
     };
 
-    tick();
-    const id = setInterval(tick, LIVE_POLL_MS);
+    // Only poll while the tab is actually visible.
+    //
+    // This matters more than it looks. A forgotten open tab polling every two
+    // seconds keeps a free-tier backend permanently awake, and on Render the
+    // free instance-hours are shared across the whole workspace: one abandoned
+    // tab could exhaust the monthly pool and suspend every other free service
+    // on the account. Pausing on hide costs nothing and removes that risk.
+    let id = null;
+
+    const start = () => {
+      if (id === null) {
+        tick();
+        id = setInterval(tick, LIVE_POLL_MS);
+      }
+    };
+
+    const stop = () => {
+      if (id !== null) {
+        clearInterval(id);
+        id = null;
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") start();
+      else stop();
+    };
+
+    onVisibility();
+    document.addEventListener("visibilitychange", onVisibility);
+
     return () => {
       cancelled = true;
-      clearInterval(id);
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
@@ -179,8 +209,9 @@ export default function App() {
 
       {connError && (
         <p className="error-banner">
-          Cannot reach the API at localhost:8001. {connError}. Check the backend is
-          running with <code>uvicorn app.main:app --reload --port 8001</code>
+          Cannot reach the API. {connError}. If you are running locally, check the
+          backend is started with{" "}
+          <code>uvicorn app.main:app --reload --port 8001</code>
         </p>
       )}
 

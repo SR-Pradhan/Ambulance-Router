@@ -2,10 +2,17 @@
 // fetch() directly, so there is exactly one place that knows the API's shape,
 // its base URL, and how errors are surfaced.
 
-// Port 8001, not FastAPI's usual 8000: another service on this machine already
-// holds 8000. If you move the backend, change this and the matching entry in
-// backend/app/main.py ALLOWED_ORIGINS.
-const BASE_URL = "http://localhost:8001";
+// Where the API lives.
+//
+// Deployed builds set VITE_API_URL (Vercel: Settings > Environment Variables).
+// Vite inlines it at BUILD time, not run time, so changing it means triggering
+// a redeploy, not just restarting anything.
+//
+// The fallback is local development: port 8001, not FastAPI's usual 8000,
+// because another service on the dev machine already holds 8000. If you change
+// it, update ALLOWED_ORIGINS in backend/app/main.py to match.
+const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:8001")
+  .replace(/\/$/, "");
 
 async function request(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
