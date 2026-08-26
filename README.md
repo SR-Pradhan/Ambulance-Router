@@ -100,7 +100,8 @@ python tests/test_geo.py            # 14
 python tests/test_priority_queue.py # 12
 python tests/test_facilities.py     # 6
 python tests/test_traffic.py        # 9
-python tests/test_osm.py            # 8   → 82 total
+python tests/test_osm.py            # 8
+python tests/test_auth.py           # 7   → 89 total
 ```
 
 ✅ The algorithm tests use hand-built graphs and need no database or server — that is
@@ -144,12 +145,13 @@ backend/
     models/       🗃️ SQLAlchemy ORM models
     schemas/      ✅ Pydantic request and response validation
     facilities.py 🏥 Hospital capability matching
+    auth.py       🔐 Admin key comparison (framework free, so it tests alone)
     osm.py        🗺️ OpenStreetMap parsing and graph simplification
     graph_loader.py  shared road-network loading
   data/           💾 Cached OpenStreetMap responses (540 KB)
   osm_seed.py     Overpass fetch, caching, hospital selection
   seed_data.py    Creates the schema and seeds the road network
-  tests/          🧪 82 algorithm tests
+  tests/          🧪 89 tests
 
 frontend/src/
   api/client.js   Every backend call lives here
@@ -192,7 +194,9 @@ Stated deliberately rather than hidden:
   Bed counts, specialist units, congestion figures and ambulance positions are invented.
 - 🚦 Congestion is derived from road class and time of day, not measured.
 - 📡 Live positions are interpolated from elapsed time, not GPS.
-- 🔒 No authentication: anyone reaching the admin dashboard can close a hospital.
+- 🔒 Admin actions (changing beds, completing a trip) are gated by a single
+  shared key, not real accounts. It proves a request was *authorised*, not *who*
+  made it, and there is no audit trail. Viewing stays public.
 - 🔁 Ambulance dispatch has no locking; concurrent requests could race.
 - 🗄️ No database migrations — a schema change needs a manual `ALTER TABLE`.
 - 🛤️ All roads are two-way; one-way streets are not modelled.

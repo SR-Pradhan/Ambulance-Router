@@ -6,6 +6,7 @@ from app.dsa.geo import haversine_km
 from app.dsa.heap_ranking import rank_hospitals
 from app.schemas.hospitals import NearbyHospitalsQuery, BedUpdate
 from app.facilities import facility_list, hospital_has_facility
+from app.api.deps import require_admin
 
 router = APIRouter()
 
@@ -78,7 +79,12 @@ def list_hospitals(db: Session = Depends(get_db)):
 
 
 @router.patch("/hospitals/{hospital_id}/beds")
-def update_beds(hospital_id: int, payload: BedUpdate, db: Session = Depends(get_db)):
+def update_beds(
+    hospital_id: int,
+    payload: BedUpdate,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_admin),
+):
     """Hospital capacity management -- the second half of the problem statement.
 
     Setting available_beds to 0 immediately removes the hospital from dispatch,

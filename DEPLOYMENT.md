@@ -63,6 +63,19 @@ Keep that connection string; the backend needs it next.
    |---|---|
    | `DATABASE_URL` | the Neon connection string from step 1 |
    | `PYTHON_VERSION` | `3.13.0` |
+   | `ADMIN_KEY` | a secret you generate (see below) |
+
+   Generate the admin key with:
+
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(24))"
+   ```
+
+   This gates the two destructive endpoints (changing bed counts, completing a
+   trip). **Without it those endpoints return 503 rather than running
+   unprotected** — the check fails closed on purpose, so a forgotten variable is
+   loud instead of silently leaving production open. Everything else, including
+   creating a request, stays public so the demo works for visitors.
 
    Leave `ALLOWED_ORIGINS` for now; you do not know the Vercel URL yet.
 
@@ -120,6 +133,8 @@ UI shows "Cannot reach the API", the cause is almost always one of:
 | Requests go to `localhost:8001` | `VITE_API_URL` was not set at build time; redeploy the frontend |
 | First request hangs ~50s then works | Normal. The free service was asleep. |
 | 500 from the API | `DATABASE_URL` wrong, or the database was never seeded |
+| Admin buttons give 503 | `ADMIN_KEY` not set on Render |
+| Admin buttons give 401 | Wrong key typed into the dashboard's Unlock control |
 
 ---
 

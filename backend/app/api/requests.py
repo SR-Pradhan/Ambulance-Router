@@ -13,6 +13,7 @@ from app.dsa.heap_ranking import (rank_hospitals, rank_by_distance,
                                   CAPACITY_PENALTY_MINUTES)
 from app.dsa.priority_queue import PriorityQueue, triage_score
 from app.facilities import facility_list, hospital_has_facility, FACILITY_LABELS
+from app.api.deps import require_admin
 
 router = APIRouter()
 
@@ -445,7 +446,11 @@ def list_requests(db: Session = Depends(get_db)):
 
 
 @router.patch("/requests/{request_id}/complete")
-def complete_request(request_id: int, db: Session = Depends(get_db)):
+def complete_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_admin),
+):
     """Finish a trip: free the ambulance and park it at the hospital.
 
     This closes the loop. Before it existed, every dispatch permanently consumed

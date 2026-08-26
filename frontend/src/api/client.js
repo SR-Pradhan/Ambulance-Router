@@ -14,10 +14,55 @@
 const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:8001")
   .replace(/\/$/, "");
 
+// The admin key lives in sessionStorage, never in the bundle.
+//
+// Anything compiled into the JavaScript is public: you can read it out of the
+// deployed bundle with one curl. So the key is typed by the operator and kept
+// only for this browser tab. sessionStorage is cleared when the tab closes and
+// is not shared with other tabs or sites.
+//
+// Honest limitation: sessionStorage is readable by any script running on the
+// page, so it would not survive an XSS. A production system would use an
+// httpOnly cookie the JavaScript cannot read. For a single-operator demo this
+// is the right trade between safety and being able to refresh without
+// re-entering the key.
+const ADMIN_KEY_STORAGE = "adminKey";
+
+export const adminKey = {
+  get() {
+    try {
+      return sessionStorage.getItem(ADMIN_KEY_STORAGE) || null;
+    } catch {
+      return null;
+    }
+  },
+  set(value) {
+    try {
+      if (value) sessionStorage.setItem(ADMIN_KEY_STORAGE, value);
+      else sessionStorage.removeItem(ADMIN_KEY_STORAGE);
+    } catch {
+      // Private mode blocks storage. The key still works for this page load.
+    }
+  },
+  clear() {
+    this.set(null);
+  },
+};
+
 async function request(path, options = {}) {
+  const { admin, ...rest } = options;
+
+  const headers = { "Content-Type": "application/json" };
+  // Only attach the key to calls that actually need it, so it is not sprayed
+  // across every public request.
+  if (admin) {
+    const key = adminKey.get();
+    if (key) headers["X-Admin-Key"] = key;
+  }
+
   const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
+    headers,
+    ...rest,
   });
 
   if (!response.ok) {
@@ -58,7 +103,8 @@ export const api = {
     }),
   queue: () => request("/queue"),
   listRequests: () => request("/requests"),
-  completeRequest: (id) => request(`/requests/${id}/complete`, { method: "PATCH" }),
+  completeRequest: (id) =>
+    request(`/requests/${id}/complete`, { method: "PATCH", admin: true }),
 
   // Live tracking
   liveAmbulances: () => request("/ambulances/live"),
@@ -68,6 +114,7 @@ export const api = {
   updateBeds: (id, available_beds) =>
     request(`/hospitals/${id}/beds`, {
       method: "PATCH",
+      admin: true,
       body: JSON.stringify({ available_beds }),
     }),
 

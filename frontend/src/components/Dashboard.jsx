@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AdminLock from "./AdminLock";
 
 function Stat({ label, value, sub, tone, subTone }) {
   return (
@@ -35,6 +36,8 @@ export default function Dashboard({
   hospitals,
   requests,
   queue,
+  unlocked,
+  onUnlockChange,
   onUpdateBeds,
   onComplete,
 }) {
@@ -106,6 +109,15 @@ export default function Dashboard({
         </div>
       )}
 
+      <div className="admin-bar">
+        <p className="note">
+          {unlocked
+            ? "Admin actions are enabled for this tab."
+            : "Viewing is open to everyone. Changing capacity or completing a trip needs the admin key."}
+        </p>
+        <AdminLock unlocked={unlocked} onChange={onUnlockChange} />
+      </div>
+
       <div className="stats">
         <Stat label="Beds free" value={h.available_beds} sub={`of ${h.total_beds}`} />
         <Stat
@@ -169,6 +181,8 @@ export default function Dashboard({
                       min="0"
                       max={hosp.total_beds}
                       value={draft[hosp.id] ?? hosp.available_beds}
+                      disabled={!unlocked}
+                      title={unlocked ? undefined : "Unlock admin to edit beds"}
                       onChange={(e) =>
                         setDraft((d) => ({ ...d, [hosp.id]: e.target.value }))
                       }
@@ -200,14 +214,14 @@ export default function Dashboard({
                     <button
                       className="secondary small"
                       onClick={() => run(() => onUpdateBeds(hosp.id, 0))}
-                      disabled={!hosp.accepting}
+                      disabled={!unlocked || !hosp.accepting}
                     >
                       Close
                     </button>
                     <button
                       className="secondary small"
                       onClick={() => run(() => onUpdateBeds(hosp.id, hosp.total_beds))}
-                      disabled={hosp.available_beds >= hosp.total_beds}
+                      disabled={!unlocked || hosp.available_beds >= hosp.total_beds}
                     >
                       Reopen
                     </button>
@@ -310,6 +324,8 @@ export default function Dashboard({
                       <button
                         className="secondary small"
                         onClick={() => run(() => onComplete(req.id))}
+                        disabled={!unlocked}
+                        title={unlocked ? undefined : "Unlock admin to complete a trip"}
                       >
                         Complete
                       </button>

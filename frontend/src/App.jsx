@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { api } from "./api/client";
+import { api, adminKey } from "./api/client";
 import MapView from "./components/MapView";
 import RequestForm from "./components/RequestForm";
 import ResultsPanel from "./components/ResultsPanel";
@@ -60,6 +60,9 @@ function useTheme() {
 export default function App() {
   const { theme, resolved, setTheme } = useTheme();
   const [tab, setTab] = useState("map");
+  // Whether this tab holds an admin key. The SERVER decides if it is valid;
+  // this only controls whether the buttons are offered.
+  const [unlocked, setUnlocked] = useState(() => Boolean(adminKey.get()));
   const [patient, setPatient] = useState(null);
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -239,6 +242,8 @@ export default function App() {
           hospitals={hospitals}
           requests={requests}
           queue={queue}
+          unlocked={unlocked}
+          onUnlockChange={setUnlocked}
           onUpdateBeds={updateBeds}
           onComplete={completeRequest}
         />
