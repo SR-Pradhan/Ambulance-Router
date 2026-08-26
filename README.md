@@ -1,176 +1,204 @@
-# Emergency Ambulance Route Optimizer
+# 🚑 Emergency Ambulance Route Optimizer
 
-A full-stack system that takes a patient's location and answers two questions:
+**[▶️ Live demo](https://ambulance-router.vercel.app)** · [📖 Deployment guide](DEPLOYMENT.md)
+
+A full-stack dispatch system that takes a patient's location and answers two questions:
 **which hospital should they go to**, and **what is the fastest road route there** —
 then dispatches the nearest available ambulance and tracks it on a live map.
 
-> **All data in this project is simulated.** Locations, road network, hospitals and
-> ambulances are synthetic. This is a portfolio demonstration of algorithms and
-> system design. **It is not a medically validated system and must not be used as
-> one.**
+> ⚠️ **All capacity and traffic data in this project is simulated.** The road network
+> and hospital names are real OpenStreetMap data, but bed counts, specialist units,
+> congestion figures and ambulance positions are invented. This is a portfolio
+> demonstration of algorithms and system design. **It is not a medically validated
+> system and must not be used as one.**
 
 ---
 
-## What makes it interesting
+## ✨ What makes it interesting
 
-- **The routing algorithms are hand-written.** Dijkstra, A\* and the min-heap
-  ranking are implemented from scratch — no `networkx`, no shortest-path library.
-- **A\* is measurably faster, and provably correct.** `/route?algo=compare` runs
-  both and reports node expansions: on the real 433-junction network Dijkstra
-  expands 379 nodes and A\* expands 286, for the same route.
-- **Ranking on road distance changes the answer.** Straight-line distance picks
-  City Hospital (3.068 km); routing through the actual road network shows
-  Sunrise Medical is genuinely closer (3.912 km vs 4.179 km by road).
-- **Live tracking with no background jobs.** An ambulance's position is derived
-  from elapsed time along its computed route, so it is consistent on every
-  request and survives a restart.
+🧮 **The routing algorithms are hand-written.** Dijkstra, A\*, the min-heap ranking
+and the triage priority queue are all implemented from scratch — no `networkx`, no
+shortest-path library.
+
+⚡ **A\* is measurably faster, and provably correct.** `/route?algo=compare` runs both
+and reports node expansions: on the real 433-junction network Dijkstra expands **379**
+nodes and A\* expands **286**, for the same route.
+
+🚦 **Traffic changes the road taken, not just the ETA.** Edge weights are travel
+**time**, so a congested shortcut loses to a clear detour. On the demo grid a 3.9 km
+direct route is rejected in favour of an 8.4 km one that is genuinely faster.
+
+🏥 **Ranking balances distance against capacity.** A hospital with no spare beds is
+ranked as if it were 3 minutes further away — enough to break ties, never enough to
+send a patient past a much closer hospital.
+
+⏱️ **Triage that cannot starve anyone.** Severity sets your place in the queue, and
+every 10 minutes of waiting improves it by one full level, so a routine case behind a
+stream of critical arrivals still gets served.
+
+📍 **Live tracking with no background jobs.** An ambulance's position is derived from
+elapsed time along its computed route, so it is consistent on every request and
+survives a restart.
 
 ---
 
-## Stack
+## 🛠️ Stack
 
 | Layer | Choice |
 |---|---|
-| Backend | Python + FastAPI |
-| Algorithms | Hand-written Dijkstra, A\*, min-heap |
-| Database | PostgreSQL + SQLAlchemy |
-| Frontend | React + Leaflet (Vite) |
+| 🐍 Backend | Python + FastAPI |
+| 🧮 Algorithms | Hand-written Dijkstra, A\*, min-heap, binary heap |
+| 🐘 Database | PostgreSQL + SQLAlchemy |
+| ⚛️ Frontend | React + Leaflet (Vite) |
+| 🗺️ Map data | OpenStreetMap via Overpass |
 
 ---
 
-## Deployment
+## 🚀 Running it locally
 
-See [DEPLOYMENT.md](DEPLOYMENT.md). Database on Neon, backend on Render,
-frontend on Vercel, all free tier.
-
-## Running it
-
-**Ports:** the backend runs on **8001** and the frontend on **5174** — not the
-usual 8000/5173, which are taken by other services on the development machine.
-If you change them, update `frontend/src/api/client.js` and `ALLOWED_ORIGINS`
-in `backend/app/main.py` together, or the browser will block every request.
-
-### 1. Backend and database
+### 1️⃣ Backend and database
 
 ```bash
-createdb ambulance_router          # first time only
+createdb ambulance_router
 
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-python seed_data.py                # creates the tables AND seeds real OSM data
+python seed_data.py
 uvicorn app.main:app --reload --port 8001
 ```
 
-`seed_data.py` creates any missing tables from the SQLAlchemy models, then seeds
-the **real Gurugram road network** from cached OpenStreetMap data in
-`backend/data/` (540 KB, committed, so no internet is needed). Add
-`--synthetic` to rebuild the original 4x4 invented grid instead. It is **destructive and
-idempotent**: it truncates every table and rebuilds, so running it twice gives
-the same result — including wiping any emergency requests made through the API.
+`seed_data.py` creates the tables from the SQLAlchemy models, then seeds the **real
+Gurugram road network** from cached OpenStreetMap data in `backend/data/` (540 KB,
+committed, so no internet needed). Add `--synthetic` to rebuild the original 4×4
+invented grid instead.
 
-> Verified end to end on an empty database and in a clean virtualenv: the
-> commands above are the complete setup, with nothing to run by hand in `psql`.
+> 💡 Verified end to end on an empty database and in a clean virtualenv: these
+> commands are the complete setup, with nothing to run by hand in `psql`.
 
-**Schema changes:** `create_all()` creates missing *tables* but never alters
-existing ones. If you add a column to a model, an already-created table will not
-gain it — this project has no migration tool (no Alembic), so either drop and
-recreate the database or `ALTER TABLE` by hand.
+📚 Interactive API docs: <http://localhost:8001/docs>
 
-Interactive API docs: <http://localhost:8001/docs>
-
-### 2. Frontend
+### 2️⃣ Frontend
 
 ```bash
 cd frontend
 npm install
-npm run dev                        # http://localhost:5174
+npm run dev
 ```
 
-### 3. Tests
+Opens on <http://localhost:5174>.
+
+### 3️⃣ Tests
 
 ```bash
 cd backend
-python tests/test_dijkstra.py      # 9
-python tests/test_astar.py         # 6
-python tests/test_heap_ranking.py  # 10
-python tests/test_geo.py           # 14
+python tests/test_dijkstra.py       # 9
+python tests/test_astar.py          # 8
+python tests/test_heap_ranking.py   # 16
+python tests/test_geo.py            # 14
 python tests/test_priority_queue.py # 12
 python tests/test_facilities.py     # 6
 python tests/test_traffic.py        # 9
-python tests/test_osm.py            # 8   -> 82 total
+python tests/test_osm.py            # 8   → 82 total
 ```
 
-The algorithm tests use hand-built graphs and need no database or server —
-that is the point of keeping `app/dsa/` free of any framework imports.
+✅ The algorithm tests use hand-built graphs and need no database or server — that is
+the point of keeping `app/dsa/` free of any framework imports.
 
 ---
 
-## API
+## 🔌 API
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `GET` | `/route?source=&dest=&algo=` | Shortest path. `algo=dijkstra\|astar\|compare` |
+| `GET` | `/route?source=&dest=&algo=&hour=` | Fastest route. `algo=dijkstra\|astar\|compare` |
 | `GET` | `/hospitals/nearby?lat=&lng=&top_k=` | Rank hospitals by straight-line distance |
-| `GET` | `/hospitals` | All hospitals with capacity |
+| `GET` | `/hospitals` | All hospitals with capacity and units |
 | `PATCH` | `/hospitals/{id}/beds` | Update available beds |
-| `POST` | `/requests` | Create an emergency request (dispatch) |
+| `POST` | `/requests` | Create an emergency request and dispatch |
 | `GET` | `/requests` | List all requests |
 | `GET` | `/requests/{id}` | One request with its route |
 | `PATCH` | `/requests/{id}/complete` | Finish a trip, free the ambulance |
+| `GET` | `/queue` | Triage queue, in service order |
 | `GET` | `/ambulances` | All ambulances |
 | `GET` | `/ambulances/live` | Simulated live positions |
 | `GET` | `/admin/overview` | Dashboard statistics |
-| `GET` | `/queue` | Triage queue, in service order |
 
 ---
 
-## Project layout
+## 📁 Project layout
 
 ```
 backend/
   app/
-    dsa/        Pure algorithms - no FastAPI, no database, fully testable alone
-    api/        Thin FastAPI routers: fetch data, call dsa/, format JSON
-    models/     SQLAlchemy ORM models
-    schemas/    Pydantic request/response validation
-    graph_loader.py   Shared road-network loading
-  tests/        82 algorithm tests
-  osm.py        Pure OSM parsing and graph simplification
-  osm_seed.py   Overpass fetch, caching, hospital selection
-  data/         Cached OpenStreetMap responses (540 KB)
-  seed_data.py  Creates the schema + seeds the real road network
+    dsa/          🧮 Pure algorithms. No FastAPI, no database, fully testable alone
+      graph.py         adjacency list
+      dijkstra.py      shortest path + all-targets variant
+      astar.py         informed search, admissible heuristic
+      heap_ranking.py  hospital ranking by distance and capacity
+      priority_queue.py hand-written binary heap for triage
+      geo.py           haversine, snapping, path interpolation
+      traffic.py       congestion model, distance to travel time
+    api/          🔌 Thin FastAPI routers: fetch data, call dsa/, format JSON
+    models/       🗃️ SQLAlchemy ORM models
+    schemas/      ✅ Pydantic request and response validation
+    facilities.py 🏥 Hospital capability matching
+    osm.py        🗺️ OpenStreetMap parsing and graph simplification
+    graph_loader.py  shared road-network loading
+  data/           💾 Cached OpenStreetMap responses (540 KB)
+  osm_seed.py     Overpass fetch, caching, hospital selection
+  seed_data.py    Creates the schema and seeds the road network
+  tests/          🧪 82 algorithm tests
 
-frontend/
-  src/
-    api/client.js       Every backend call lives here
-    components/
-      MapView.jsx       Leaflet map, live ambulances, routes
-      RequestForm.jsx   Create an emergency request
-      ResultsPanel.jsx  Chosen hospital, route, ETA
-      Dashboard.jsx     Capacity management and request list
+frontend/src/
+  api/client.js   Every backend call lives here
+  components/
+    MapView.jsx      🗺️ Leaflet map, live ambulances, routes
+    RequestForm.jsx  📝 Create an emergency request
+    ResultsPanel.jsx 📊 Chosen hospital, route, ETA
+    Dashboard.jsx    🎛️ Capacity management, triage queue, requests
+    ThemeToggle.jsx  🌓 Light, dark and system themes
 ```
 
-The `dsa/` ↔ `api/` split is the central design decision: algorithms never import
-the web framework or the database, so they can be tested in isolation and would
+The `dsa/` ↔ `api/` split is the central design decision: **algorithms never import
+the web framework or the database**, so they can be tested in isolation and would
 survive swapping either one out.
 
 ---
 
-## Known simplifications
+## 🧭 How it works
+
+A single dispatch, end to end:
+
+1. 📍 **Snap** the patient's coordinates to the nearest road junction
+2. 🔍 **One Dijkstra run** gives the travel time to every junction, and therefore to
+   every hospital *and* every ambulance — the graph is undirected, so one search
+   answers both
+3. 🏥 **Filter** hospitals with no free beds, and any lacking a required specialist unit
+4. ⚖️ **Rank** the survivors on travel time plus a capacity penalty, using a min-heap
+5. 🛣️ **Reconstruct** the road route to the winner
+6. 🚑 **Dispatch** the nearest free ambulance, or queue the patient by triage score
+7. ⏱️ **Track** its position, interpolated from elapsed time along the route
+
+---
+
+## ⚠️ Known simplifications
 
 Stated deliberately rather than hidden:
 
-- **Roads and hospital names are real; capacity and traffic are not.** The road
-  network (433 junctions, 643 segments) and the 12 hospital names and positions
-  come from OpenStreetMap. Bed counts, specialist units, congestion figures and
-  ambulance positions are invented, because OSM does not carry them. Routes and
-  distances are genuine; nothing about capacity or traffic is a measurement.
-- ETA assumes a constant 40 km/h with no traffic model.
-- Live positions are interpolated from elapsed time, not GPS.
-- Ambulance dispatch has no locking; concurrent requests could race.
-- The computed route is not persisted, so it is recomputed on read.
-- Triage uses a fixed aging rate (10 min per severity level) rather than a
-  clinically derived one.
-- No database migrations — schema changes need a manual `ALTER TABLE`.
+- 🗺️ **Roads and hospital names are real; capacity and traffic are not.** The network
+  (433 junctions, 643 segments) and the 12 hospital names come from OpenStreetMap.
+  Bed counts, specialist units, congestion figures and ambulance positions are invented.
+- 🚦 Congestion is derived from road class and time of day, not measured.
+- 📡 Live positions are interpolated from elapsed time, not GPS.
+- 🔒 No authentication: anyone reaching the admin dashboard can close a hospital.
+- 🔁 Ambulance dispatch has no locking; concurrent requests could race.
+- 🗄️ No database migrations — a schema change needs a manual `ALTER TABLE`.
+- 🛤️ All roads are two-way; one-way streets are not modelled.
+
+---
+
+## 📄 Licence
+
+Portfolio project. Map data © OpenStreetMap contributors.
