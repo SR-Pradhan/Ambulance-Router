@@ -50,7 +50,31 @@ export default function Dashboard({
     }
   };
 
-  if (!overview) return <div className="panel muted">Loading dashboard</div>;
+  // A skeleton rather than the word "Loading": it shows the shape of what is
+  // coming, so the layout does not jump when the data lands.
+  if (!overview) {
+    return (
+      <div className="dashboard" aria-busy="true" aria-live="polite">
+        <span className="sr-only">Loading dashboard</span>
+        <div className="stats">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div className="stat" key={i}>
+              <span className="skeleton skeleton-value" />
+              <span className="skeleton skeleton-label" />
+            </div>
+          ))}
+        </div>
+        {Array.from({ length: 2 }, (_, i) => (
+          <div className="panel" key={i}>
+            <span className="skeleton skeleton-title" />
+            {Array.from({ length: 4 }, (_, r) => (
+              <span className="skeleton skeleton-row" key={r} />
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const { hospitals: h, ambulances: a, requests: r } = overview;
 
@@ -68,7 +92,19 @@ export default function Dashboard({
 
   return (
     <div className="dashboard">
-      {error && <p className="error-banner">{error}</p>}
+      {error && (
+        <div className="error-banner" role="alert">
+          <span>{error}</span>
+          <button
+            type="button"
+            className="banner-close"
+            onClick={() => setError(null)}
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <div className="stats">
         <Stat label="Beds free" value={h.available_beds} sub={`of ${h.total_beds}`} />

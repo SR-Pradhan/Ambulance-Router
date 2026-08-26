@@ -88,6 +88,53 @@ function TrackpadGestures() {
   return null;
 }
 
+// What every mark on the map means.
+//
+// Without this a visitor sees green circles, red dashed circles, and two shades
+// of ambulance with nothing explaining any of it. Each entry names the mark AND
+// describes it in words, so the meaning never rests on colour alone.
+function Legend({ movingCount }) {
+  return (
+    <div className="legend" aria-label="Map legend">
+      <div className="legend-row">
+        <span className="legend-mark"><span className="pin is-open">🏥</span></span>
+        <span>Accepting patients</span>
+      </div>
+      <div className="legend-row">
+        <span className="legend-mark"><span className="pin is-full">🏥</span></span>
+        <span>Full, excluded from dispatch</span>
+      </div>
+      <div className="legend-row">
+        <span className="legend-mark"><span className="pin is-active">🚑</span></span>
+        <span>Ambulance en route</span>
+      </div>
+      <div className="legend-row">
+        <span className="legend-mark"><span className="pin is-idle">🚑</span></span>
+        <span>Ambulance available</span>
+      </div>
+      <div className="legend-row">
+        <span className="legend-mark"><span className="pin is-patient">📍</span></span>
+        <span>Patient</span>
+      </div>
+      <div className="legend-divider" />
+      <div className="legend-row">
+        <span className="legend-line to-patient" />
+        <span>Driving to patient</span>
+      </div>
+      <div className="legend-row">
+        <span className="legend-line to-hospital" />
+        <span>Carrying to hospital</span>
+      </div>
+      <div className="legend-live">
+        <span className={`live-dot ${movingCount > 0 ? "is-live" : ""}`} />
+        {movingCount > 0
+          ? `${movingCount} moving, updating every 2s`
+          : "No ambulance moving"}
+      </div>
+    </div>
+  );
+}
+
 // Click anywhere to set the patient's location. This is the interaction that
 // makes the whole thing feel like a real dispatch tool.
 function ClickToSetPatient({ onPick }) {
@@ -105,6 +152,7 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
 
   return (
     <div className="map-wrap">
+      <div className="map-stage">
       <MapContainer
         center={center}
         zoom={13}
@@ -194,6 +242,9 @@ export default function MapView({ hospitals, live, patient, onPickPatient }) {
           );
         })}
       </MapContainer>
+
+      <Legend movingCount={live.filter((a) => a.request_id !== null).length} />
+      </div>
 
       <p className="map-hint">
         Click anywhere on the map to place the patient. Swipe or drag to pan,

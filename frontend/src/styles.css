@@ -657,3 +657,169 @@ th:first-child, td:first-child { width: 1%; white-space: nowrap; }
   color: var(--accent);
   text-transform: capitalize;
 }
+
+/* --- Map legend ----------------------------------------------------------- */
+
+/* The stage is the positioning context so the legend can float over the map
+   rather than push it out of the layout. */
+.map-stage { position: relative; }
+
+.legend {
+  position: absolute;
+  right: 12px;
+  bottom: 30px;
+  z-index: 500;              /* above Leaflet panes, below its popups (700) */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 10px rgba(16, 24, 40, 0.12);
+  padding: 11px 13px;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  max-width: 215px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2.5px 0;
+  line-height: 1.35;
+}
+
+.legend-mark { flex: none; width: 22px; display: flex; justify-content: center; }
+
+/* Reuse the real marker styling at a smaller size, so the legend cannot drift
+   out of sync with what is actually drawn on the map. */
+.legend .pin {
+  width: 21px;
+  height: 21px;
+  border-width: 2px;
+  font-size: 11px;
+  box-shadow: none;
+  border-radius: 50%;
+  background: #fff;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.legend .pin.is-full { border-style: dashed; }
+
+.legend-line { flex: none; width: 22px; height: 3px; border-radius: 2px; }
+.legend-line.to-patient { background: #ef6c00; }
+.legend-line.to-hospital { background: var(--accent); }
+
+.legend-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 7px 0 5px;
+}
+
+.legend-live {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  color: var(--ink-muted);
+  font-size: 11.5px;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot-neutral);
+  flex: none;
+}
+
+/* Only pulses while something is actually moving, so the animation carries
+   information instead of being decoration. */
+.live-dot.is-live { background: var(--dot-good); animation: pulse 2s ease-in-out infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.82); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot.is-live { animation: none; }
+}
+
+/* On a narrow screen the legend would cover most of the map, so it moves below
+   it and lays out horizontally. */
+@media (max-width: 720px) {
+  .legend {
+    position: static;
+    max-width: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    box-shadow: none;
+  }
+  .legend-divider { display: none; }
+  .legend-live { border: 0; margin: 0; padding: 0; width: 100%; }
+}
+
+/* --- Loading skeletons ---------------------------------------------------- */
+
+.skeleton {
+  display: block;
+  background: linear-gradient(90deg,
+    var(--surface-sunken) 25%,
+    var(--border) 37%,
+    var(--surface-sunken) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.skeleton-value { height: 28px; width: 54%; margin-bottom: 8px; }
+.skeleton-label { height: 13px; width: 76%; }
+.skeleton-title { height: 15px; width: 190px; margin-bottom: 18px; }
+.skeleton-row { height: 34px; width: 100%; margin-bottom: 8px; }
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+/* Visible to screen readers only. The skeleton conveys "loading" visually;
+   this conveys it to anyone who cannot see it. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Dismissible banner --------------------------------------------------- */
+
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.banner-close {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+  opacity: 0.65;
+  flex: none;
+}
+.banner-close:hover { background: transparent; opacity: 1; }
