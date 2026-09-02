@@ -165,6 +165,7 @@ backend/
   data/           💾 Cached OpenStreetMap responses (540 KB)
   osm_seed.py     Overpass fetch, caching, hospital selection
   seed_data.py    Creates the schema and seeds the road network
+  migrate.py      Idempotent ALTER TABLEs, run on every deploy
   tests/          🧪 89 tests
 
 frontend/src/
@@ -217,7 +218,7 @@ Stated deliberately rather than hidden:
   shared key, not real accounts. It proves a request was *authorised*, not *who*
   made it, and there is no audit trail. Viewing stays public.
 - 🔁 Ambulance dispatch has no locking; concurrent requests could race.
-- 🗄️ No database migrations — a schema change needs a manual `ALTER TABLE`.
+- 🗄️ No real migration tool. `migrate.py` is an idempotent list of `ALTER TABLE` statements run at deploy time, which is enough here but would not scale to a schema with data to preserve. Alembic is the correct answer beyond this.
 - 🛤️ All roads are two-way; one-way streets are not modelled.
 
 ---

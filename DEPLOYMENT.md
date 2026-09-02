@@ -49,8 +49,17 @@ Keep that connection string; the backend needs it next.
 2. Settings:
    - **Root Directory**: `backend`
    - **Runtime**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
+   - **Build Command**: `pip install -r requirements.txt && python migrate.py`
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+   > ⚠️ The `&& python migrate.py` in the build command is not optional. This
+   > project has no migration tool: `create_all()` creates missing *tables* but
+   > never alters an existing one, so a new column on a model silently fails to
+   > reach a database that already has the table. When `dispatched_at` was added
+   > in v1.17 without this step, every endpoint touching `emergency_requests`
+   > returned 500 while `/hospitals` kept working, which looks like a partial
+   > outage rather than a schema mismatch. `migrate.py` is idempotent and safe to
+   > run on every deploy.
    - **Instance Type**: Free
 
    `--host 0.0.0.0` is not optional. The default binds to localhost only, and
