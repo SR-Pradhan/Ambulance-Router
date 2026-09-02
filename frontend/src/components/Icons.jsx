@@ -1,7 +1,8 @@
 /**
  * Inline SVG icons.
  *
- * These replace the emoji that used to sit in the rail and the brand mark.
+ * These replace the emoji that used to sit in the rail. The brand mark itself
+ * lives in Logo.jsx, because it carries its own tile and colours.
  * Emoji are the single clearest sign of an unfinished interface: they render
  * differently on every platform, they cannot inherit text colour, they cannot
  * be aligned optically against text, and they carry a cartoon weight that no
@@ -38,15 +39,6 @@ export function BoardIcon(props) {
     <svg {...base} {...props}>
       <path d="M3 3v18h18" />
       <path d="M7 15v3M12 10v8M17 6v12" />
-    </svg>
-  );
-}
-
-/** The brand mark: a medical cross inside a rounded square. */
-export function CrossIcon(props) {
-  return (
-    <svg {...base} strokeWidth="2.25" {...props}>
-      <path d="M12 6v12M6 12h12" />
     </svg>
   );
 }
