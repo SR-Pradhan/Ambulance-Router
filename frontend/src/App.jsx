@@ -184,12 +184,15 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <div>
-          <h1>Ambulance Route Optimizer</h1>
-          <p className="subtitle">
-            Simulated data. A portfolio demonstration, not a medically validated
-            system.
-          </p>
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">🚑</span>
+          <div>
+            <h1>Ambulance Route Optimizer</h1>
+            <p className="subtitle">
+              Simulated data. A portfolio demonstration, not a medically
+              validated system.
+            </p>
+          </div>
         </div>
         <div className="header-controls">
           <ThemeToggle theme={theme} resolved={resolved} onChange={setTheme} />
