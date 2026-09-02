@@ -1199,3 +1199,137 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
   .map { height: 520px; flex: none; }
   aside { overflow: visible; }
 }
+
+/* --- Location search ------------------------------------------------------ */
+
+.search-row { display: flex; gap: 8px; }
+.search-row input { flex: 1; min-width: 0; }
+.search-row button { flex: none; white-space: nowrap; }
+
+.search-results {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+.search-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 9px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.search-results button:hover { background: var(--accent-tint); color: var(--accent-ink); }
+
+/* --- The pinned location -------------------------------------------------- */
+
+.pinned {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  /* A left edge marker rather than a fill, so a set location is obvious at a
+     glance without another coloured block competing with the dispatch button. */
+  border-left: 3px solid var(--border-strong);
+}
+
+.pinned.is-set { border-left-color: var(--accent); }
+.pinned-label { font-size: 11px; color: var(--ink-muted); }
+.pinned strong { font-size: 14px; line-height: 1.35; }
+.pinned-coords {
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.pinned-warn { font-size: 12px; color: var(--warning); margin-top: 4px; }
+
+/* --- Severity ------------------------------------------------------------- */
+
+.severity { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 7px; }
+
+.severity legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ink-secondary);
+}
+
+/* Cards rather than a dropdown: all three options and their descriptions are
+   visible at once, so choosing does not require opening anything. */
+.severity-option {
+  display: flex;
+  /* Explicit, because the global `label` rule sets `flex-direction: column`
+     for stacked field labels. Declaring `display: flex` alone here inherited
+     that column direction and put the radio above its own text. */
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.severity-option:hover { border-color: var(--border-strong); }
+
+.severity-option.is-active {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.severity-option input { flex: none; margin: 2px 0 0; accent-color: var(--accent); }
+.severity-option span { display: flex; flex-direction: column; gap: 1px; }
+.severity-option strong { font-size: 13px; font-weight: 600; }
+.severity-option .sub { font-size: 12px; color: var(--ink-secondary); line-height: 1.35; }
+.severity-option.is-active .sub { color: var(--accent-ink); }
+
+.form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.form-actions button { flex: 1; min-width: 140px; }
+
+/* --- Request form layout -------------------------------------------------- */
+
+/* The form owns its own rhythm rather than each block carrying a margin, so
+   adding or removing a section cannot leave a double gap behind. */
+form.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+form.panel .panel-head { margin-bottom: 0; }
+
+/* The search field and the location button stack. Side by side inside a 380px
+   column the input was narrow enough to truncate its own placeholder. */
+.search-row { flex-direction: column; }
+.search-row button { width: 100%; }
+
+/* Radios must not inherit the full-width sizing that the text and select
+   inputs in this form use, or the dot centres itself over the label. */
+.severity-option input[type="radio"] {
+  width: auto;
+  flex: none;
+}
+
+/* One action per row: "Dispatch ambulance" wrapped onto two lines when two
+   buttons shared the width. */
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.form-actions button { width: 100%; min-width: 0; }

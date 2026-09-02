@@ -40,6 +40,12 @@ stream of critical arrivals still gets served.
 elapsed time along its computed route, so it is consistent on every request and
 survives a restart. No GPS is involved and none is claimed.
 
+📍 **You say where you are, not what your coordinates are.** Address search and
+landmark lookup through OpenStreetMap's own geocoder, one tap for device
+location, or a click on the map, and every one of them is named back to you in
+words. Results are bounded to the area the road graph actually covers, so the
+search cannot offer a place the router has no roads for.
+
 🎨 **Built to be read.** An operations console shell (fixed rail, live figures in the top bar, one scrolling work area), light and dark themes, a map legend, skeleton loading
 states, and WCAG AA contrast throughout. No status is signalled by colour alone.
 
@@ -170,9 +176,10 @@ backend/
 
 frontend/src/
   api/client.js   Every backend call lives here
+  api/geocode.js  Address search and reverse geocoding (Nominatim)
   components/
     MapView.jsx      🗺️ Leaflet map, live ambulances, routes
-    RequestForm.jsx  📝 Create an emergency request
+    RequestForm.jsx  📝 Address search, device location, severity, dispatch
     ResultsPanel.jsx 📊 Chosen hospital, route, ETA
     Dashboard.jsx    🎛️ Capacity management, triage queue, requests
     AdminLock.jsx    🔐 Unlock control for the gated actions
