@@ -212,7 +212,7 @@ Stated deliberately rather than hidden:
   can be a few hundred metres from the actual pin. The map draws that last
   stretch as a dashed line labelled "not routed" rather than pretending to
   cover it.
-- 📡 Live positions are interpolated from elapsed time, not GPS.
+- 📡 Live positions are interpolated from elapsed time since dispatch, not GPS. Trips auto-complete on arrival, so `/ambulances/live` writes state: a deliberate trade to avoid running a background worker.
 - 🔒 Admin actions (changing beds, completing a trip) are gated by a single
   shared key, not real accounts. It proves a request was *authorised*, not *who*
   made it, and there is no audit trail. Viewing stays public.

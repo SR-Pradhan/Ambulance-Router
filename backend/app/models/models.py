@@ -69,3 +69,10 @@ class EmergencyRequest(Base):
     # Nullable: most cases need no specialist unit.
     required_facility = Column(String, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
+    # When an ambulance was actually assigned, which is NOT when the request
+    # was made: a queued patient can wait a long time first. Live positions are
+    # interpolated from this, because using created_at means a patient who
+    # waited twenty minutes gets an ambulance that has notionally already
+    # driven for twenty minutes and arrives instantly. Nullable, because a
+    # pending request has not been dispatched yet.
+    dispatched_at = Column(TIMESTAMP, nullable=True)

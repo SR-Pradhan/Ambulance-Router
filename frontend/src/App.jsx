@@ -5,6 +5,7 @@ import RequestForm from "./components/RequestForm";
 import ResultsPanel from "./components/ResultsPanel";
 import Dashboard from "./components/Dashboard";
 import ThemeToggle from "./components/ThemeToggle";
+import { MapIcon, BoardIcon, CrossIcon } from "./components/Icons";
 
 const LIVE_POLL_MS = 2000;
 const THEME_KEY = "theme";
@@ -203,7 +204,9 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="rail" aria-label="Views">
-        <span className="rail-mark" aria-hidden="true">🚑</span>
+        <span className="rail-mark">
+          <CrossIcon width="20" height="20" />
+        </span>
 
         <button
           type="button"
@@ -211,7 +214,7 @@ export default function App() {
           aria-current={tab === "map" ? "page" : undefined}
           onClick={() => setTab("map")}
         >
-          <span className="rail-icon" aria-hidden="true">🗺️</span>
+          <MapIcon className="rail-icon" />
           Map
           {movingCount > 0 && (
             <span className="rail-badge">
@@ -227,7 +230,7 @@ export default function App() {
           aria-current={tab === "dashboard" ? "page" : undefined}
           onClick={() => setTab("dashboard")}
         >
-          <span className="rail-icon" aria-hidden="true">📊</span>
+          <BoardIcon className="rail-icon" />
           Board
         </button>
 

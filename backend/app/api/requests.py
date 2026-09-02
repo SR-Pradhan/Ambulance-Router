@@ -227,6 +227,8 @@ def dispatch_waiting(db: Session):
         req.assigned_hospital_id = result["hospital"]["id"]
         req.assigned_ambulance_id = vehicle.id
         req.status = "en_route"
+        # The journey clock starts HERE, not at req.created_at.
+        req.dispatched_at = datetime.now()
         vehicle.status = "busy"
         dispatched.append(req)
 
