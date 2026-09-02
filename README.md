@@ -225,7 +225,7 @@ Stated deliberately rather than hidden:
   shared key, not real accounts. It proves a request was *authorised*, not *who*
   made it, and there is no audit trail. Viewing stays public.
 - 🔁 Ambulance dispatch has no locking; concurrent requests could race.
-- 🧾 Completed requests are kept, not deleted: a finished request is the record of which hospital was chosen and why. The Board defaults to live incidents, and a demo retention cap keeps the newest 200 completed rows so a public demo cannot grow without bound. A real system would archive rather than delete.
+- 🧾 Completed requests are kept, not deleted: a finished request is the record of which hospital was chosen and why. The Board defaults to live incidents, and a demo retention cap keeps the newest 50 completed rows (about 14 KB), matched to the page size so everything kept is reachable so a public demo cannot grow without bound. A real system would archive rather than delete.
 - 🗄️ No real migration tool. `migrate.py` is an idempotent list of `ALTER TABLE` statements run at deploy time, which is enough here but would not scale to a schema with data to preserve. Alembic is the correct answer beyond this.
 - 🛤️ All roads are two-way; one-way streets are not modelled.
 

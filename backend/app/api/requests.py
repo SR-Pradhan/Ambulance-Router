@@ -194,13 +194,27 @@ def waiting_queue(db: Session, now=None):
     return pq
 
 
-# The demo runs on a free tier database that anyone on the internet can post
-# to. Completed requests are kept as the record of what happened, but not
-# forever: beyond this many, the oldest are dropped so the table cannot grow
-# without bound. This is a DEMO retention policy. A real system would archive
-# rather than delete, and would be told how long to keep records by regulation,
-# not by a constant in a source file.
-RETAIN_COMPLETED = 200
+# Page size for GET /requests, and the retention ceiling below.
+DEFAULT_LIMIT = 50
+
+# How many completed requests to keep.
+#
+# Tied to DEFAULT_LIMIT on purpose: GET /requests returns at most that many
+# rows, so retaining more than it would keep history nobody can actually see
+# without changing the limit too. Keeping the two equal means "everything
+# retained is reachable", which is a rule that stays true if either is tuned.
+#
+# Sized small deliberately. This is a prototype sharing one 0.5 GB Neon free
+# tier with the author's other projects, so the budget for demo rows is close
+# to nothing. 50 completed trips is plenty to show that history is kept and
+# that triage ordering worked, which is all the Board needs to demonstrate.
+#
+# (An earlier version of this constant was 5000, sized against the whole free
+# tier as though this project owned it. It does not.)
+#
+# This is a DEMO retention policy. A real system would archive rather than
+# delete, and the period would be set by regulation, not by a constant here.
+RETAIN_COMPLETED = DEFAULT_LIMIT
 
 
 def prune_completed(db: Session):
@@ -463,7 +477,6 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
 # rather than unbounded because this endpoint returned EVERY row on every
 # dashboard refresh, which grows without limit on a public demo anybody can
 # post to.
-DEFAULT_LIMIT = 50
 MAX_LIMIT = 500
 
 
