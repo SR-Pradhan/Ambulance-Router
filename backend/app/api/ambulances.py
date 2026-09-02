@@ -106,6 +106,24 @@ def sweep_arrived(db, graph, coords, now):
         EmergencyRequest.assigned_ambulance_id.isnot(None),
     ).all()
 
+    # Reconcile orphans first.
+    #
+    # An ambulance flagged busy that no en_route request refers to is stranded:
+    # nothing will ever free it, because every release path keys off a request.
+    # One leaked vehicle permanently removes a third of a three-ambulance
+    # fleet, which is the same failure as the bug this sweep exists to fix,
+    # just slower. Rather than hunt every path that could leak one, the
+    # invariant is asserted here on every poll: busy means a live trip.
+    on_trip = {r.assigned_ambulance_id for r in active}
+    orphans = [
+        a for a in db.query(Ambulance).filter(Ambulance.status == "busy").all()
+        if a.id not in on_trip
+    ]
+    for vehicle in orphans:
+        vehicle.status = "available"
+    if orphans:
+        db.commit()
+
     completed = []
 
     for req in active:
@@ -144,10 +162,11 @@ def sweep_arrived(db, graph, coords, now):
         req.status = "completed"
         completed.append(req.id)
 
-    if not completed:
+    if not completed and not orphans:
         return [], []
 
-    db.commit()
+    if completed:
+        db.commit()
 
     # Ambulances just became free, so hand them to the most urgent waiting
     # patients. This is what keeps the triage queue draining instead of
