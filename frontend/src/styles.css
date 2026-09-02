@@ -346,20 +346,25 @@ aside {
 
 /* --- Map ------------------------------------------------------------------ */
 
+/* NO height: 100% here, deliberately. A percentage height has to resolve
+   against a definite parent, and a grid row inside a flex-sized container is
+   not reliably definite, so the percentage silently became `auto` and the map
+   collapsed to its own min-height. A grid item stretches to fill its row by
+   default, which needs no percentage and cannot fail the same way. */
 .map-wrap {
   display: flex;
   flex-direction: column;
   gap: 9px;
   min-width: 0;
   min-height: 0;
-  height: 100%;
 }
 
 .map {
   flex: 1;
+  min-width: 0;
   /* A low floor, not a target: on a short window the map should shrink
      rather than push the hint off the bottom. */
-  min-height: 240px;
+  min-height: 200px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -884,7 +889,21 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
 
 /* The stage is the positioning context so the legend can float over the map
    rather than push it out of the layout. */
-.map-stage { position: relative; }
+/* Holds the map and the absolutely positioned legend. It also has to carry
+   the height down: it sits between .map-wrap and .map, so without `flex: 1`
+   here the map's own `flex: 1` was resolving against a block parent that had
+   no height, and the map silently fell back to its min-height. */
+.map-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  /* Column, not row. As a row the map is the MAIN axis item, so the narrow
+     screen rule `flex: none` stopped it growing and its auto width collapsed
+     to zero: a full height, zero width map that rendered as a single line.
+     As a column, width is the cross axis and stretches for free. */
+  flex-direction: column;
+}
 
 .legend {
   position: absolute;
