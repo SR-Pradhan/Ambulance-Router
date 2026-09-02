@@ -102,7 +102,8 @@ export const api = {
       }),
     }),
   queue: () => request("/queue"),
-  listRequests: () => request("/requests"),
+  listRequests: (status = "active") =>
+    request(`/requests?status=${encodeURIComponent(status)}`),
   completeRequest: (id) =>
     request(`/requests/${id}/complete`, { method: "PATCH", admin: true }),
 

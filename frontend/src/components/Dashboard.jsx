@@ -37,6 +37,9 @@ export default function Dashboard({
   overview,
   hospitals,
   requests,
+  requestMeta,
+  requestScope,
+  onRequestScopeChange,
   queue,
   unlocked,
   onUnlockChange,
@@ -82,6 +85,9 @@ export default function Dashboard({
   }
 
   const { hospitals: h, ambulances: a, requests: r } = overview;
+
+  const activeCount =
+    (requestMeta?.byStatus?.pending ?? 0) + (requestMeta?.byStatus?.en_route ?? 0);
 
   // Beds are edited as a number, committed on blur or Enter. This replaced a
   // pair of increment buttons: typing 0 to close a hospital is one action
@@ -291,12 +297,50 @@ export default function Dashboard({
 
       <div className="panel">
         <div className="panel-head">
-          <h2>Emergency requests</h2>
+          <div className="head-row">
+            <h2>Emergency requests</h2>
+            {/* Completed trips are kept, not deleted: a finished request is the
+                record of which hospital was chosen and why. They are just not
+                what a dispatcher is looking at, so they are one click away
+                rather than in the way. */}
+            <div className="scope-toggle" role="group" aria-label="Which requests to show">
+              <button
+                type="button"
+                className={requestScope === "active" ? "is-active" : ""}
+                aria-pressed={requestScope === "active"}
+                onClick={() => onRequestScopeChange("active")}
+              >
+                Live
+                {activeCount > 0 && <span className="badge">{activeCount}</span>}
+              </button>
+              <button
+                type="button"
+                className={requestScope === "all" ? "is-active" : ""}
+                aria-pressed={requestScope === "all"}
+                onClick={() => onRequestScopeChange("all")}
+              >
+                All
+              </button>
+            </div>
+          </div>
           <p className="note">
             Completing a trip frees the ambulance and parks it at the hospital, so
             the next dispatch measures from where it actually is.
+            {requestMeta?.byStatus && (
+              <>
+                {" "}
+                {requestMeta.byStatus.completed} completed so far, kept as a
+                record rather than deleted.
+              </>
+            )}
           </p>
         </div>
+
+        {requestMeta?.truncated && (
+          <p className="note">
+            Showing the {requests.length} most recent of {requestMeta.matched}.
+          </p>
+        )}
 
         <div className="table-wrap">
           <table>
@@ -344,7 +388,11 @@ export default function Dashboard({
               ))}
               {requests.length === 0 && (
                 <tr className="empty-row">
-                  <td colSpan="6">No requests yet.</td>
+                  <td colSpan="6">
+                    {requestScope === "active"
+                      ? "Nothing live right now. Every request has been completed."
+                      : "No requests yet."}
+                  </td>
                 </tr>
               )}
             </tbody>

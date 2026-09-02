@@ -1329,3 +1329,47 @@ form.panel .panel-head { margin-bottom: 0; }
   gap: 8px;
 }
 .form-actions button { width: 100%; min-width: 0; }
+
+/* --- Panel head with a control ------------------------------------------- */
+
+.head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* A two-state segmented control, same shape as the theme switcher so the two
+   read as the same kind of thing. */
+.scope-toggle {
+  display: inline-flex;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.scope-toggle button {
+  background: none;
+  border: 0;
+  color: var(--ink-secondary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scope-toggle button:hover { color: var(--ink); }
+
+.scope-toggle button.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}

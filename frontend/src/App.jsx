@@ -71,10 +71,14 @@ export default function App() {
 
   const [hospitals, setHospitals] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [requestMeta, setRequestMeta] = useState(null);
   const [overview, setOverview] = useState(null);
   const [queue, setQueue] = useState(null);
   const [live, setLive] = useState([]);
   const [connError, setConnError] = useState(null);
+  // Which requests the Board lists. Live incidents by default; completed trips
+  // are still there, one click away, but they are history not work.
+  const [requestScope, setRequestScope] = useState("active");
 
   // Everything the dashboard and map need, refreshed together so the two tabs
   // never disagree about the state of the world.
@@ -82,19 +86,20 @@ export default function App() {
     try {
       const [h, r, o, q] = await Promise.all([
         api.listHospitals(),
-        api.listRequests(),
+        api.listRequests(requestScope),
         api.overview(),
         api.queue(),
       ]);
       setHospitals(h.hospitals);
       setRequests(r.requests);
+      setRequestMeta({ matched: r.matched, truncated: r.truncated, byStatus: r.by_status });
       setOverview(o);
       setQueue(q);
       setConnError(null);
     } catch (err) {
       setConnError(err.message);
     }
-  }, []);
+  }, [requestScope]);
 
   useEffect(() => {
     refresh();
@@ -290,6 +295,9 @@ export default function App() {
               overview={overview}
               hospitals={hospitals}
               requests={requests}
+              requestMeta={requestMeta}
+              requestScope={requestScope}
+              onRequestScopeChange={setRequestScope}
               queue={queue}
               unlocked={unlocked}
               onUnlockChange={setUnlocked}

@@ -194,6 +194,48 @@ def waiting_queue(db: Session, now=None):
     return pq
 
 
+# The demo runs on a free tier database that anyone on the internet can post
+# to. Completed requests are kept as the record of what happened, but not
+# forever: beyond this many, the oldest are dropped so the table cannot grow
+# without bound. This is a DEMO retention policy. A real system would archive
+# rather than delete, and would be told how long to keep records by regulation,
+# not by a constant in a source file.
+RETAIN_COMPLETED = 200
+
+
+def prune_completed(db: Session):
+    """Drop the oldest completed requests beyond RETAIN_COMPLETED.
+
+    Nothing references a completed request, so removing one is safe: hospitals
+    and ambulances are referenced BY a request, never the other way round.
+
+    Returns how many were removed.
+    """
+    total = db.query(EmergencyRequest).filter(
+        EmergencyRequest.status == "completed"
+    ).count()
+    if total <= RETAIN_COMPLETED:
+        return 0
+
+    # Ids of the ones to keep, newest first, then delete everything completed
+    # outside that set.
+    keep = [
+        r.id
+        for r in db.query(EmergencyRequest.id)
+        .filter(EmergencyRequest.status == "completed")
+        .order_by(EmergencyRequest.id.desc())
+        .limit(RETAIN_COMPLETED)
+        .all()
+    ]
+
+    removed = db.query(EmergencyRequest).filter(
+        EmergencyRequest.status == "completed",
+        ~EmergencyRequest.id.in_(keep),
+    ).delete(synchronize_session=False)
+    db.commit()
+    return removed
+
+
 def dispatch_waiting(db: Session):
     """Give every free ambulance to the most urgent waiting patient.
 
@@ -417,18 +459,61 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
     }
 
 
+# How many completed requests the Board shows by default. The list is capped
+# rather than unbounded because this endpoint returned EVERY row on every
+# dashboard refresh, which grows without limit on a public demo anybody can
+# post to.
+DEFAULT_LIMIT = 50
+MAX_LIMIT = 500
+
+
 @router.get("/requests")
-def list_requests(db: Session = Depends(get_db)):
-    """Every emergency request, newest first. Feeds the admin dashboard."""
-    rows = db.query(EmergencyRequest).order_by(EmergencyRequest.id.desc()).all()
+def list_requests(
+    status: str = "all",
+    limit: int = DEFAULT_LIMIT,
+    db: Session = Depends(get_db),
+):
+    """Emergency requests, newest first. Feeds the Board.
+
+    `status=active` returns only what is still happening (pending and
+    en_route). That is the default view in the UI, because a dispatcher cares
+    about live incidents, not the hundred trips that already finished.
+
+    Completed requests are deliberately NOT deleted when they finish. A
+    completed request is the record of what happened: which hospital was
+    chosen, how urgent it was, which ambulance went. Throwing that away would
+    also throw away the evidence that triage and ranking did their job. The
+    growth problem is solved by filtering and a cap, not by destroying rows.
+    """
+    limit = max(1, min(limit, MAX_LIMIT))
+
+    query = db.query(EmergencyRequest)
+    if status == "active":
+        query = query.filter(EmergencyRequest.status.in_(("pending", "en_route")))
+    elif status != "all":
+        raise HTTPException(
+            status_code=422,
+            detail="status must be 'active' or 'all'",
+        )
+
+    # Counts come from the whole table, not the page, so the Board can say
+    # "showing 50 of 312" honestly.
+    totals = {
+        name: db.query(EmergencyRequest)
+        .filter(EmergencyRequest.status == name)
+        .count()
+        for name in ("pending", "en_route", "completed")
+    }
+
+    matched = query.count()
+    rows = query.order_by(EmergencyRequest.id.desc()).limit(limit).all()
     hospitals = {h.id: h.name for h in db.query(Hospital).all()}
 
     return {
         "count": len(rows),
-        "by_status": {
-            status: sum(1 for r in rows if r.status == status)
-            for status in ("pending", "en_route", "completed")
-        },
+        "matched": matched,
+        "truncated": matched > len(rows),
+        "by_status": totals,
         "requests": [
             {
                 "id": r.id,

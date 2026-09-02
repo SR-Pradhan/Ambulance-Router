@@ -8,7 +8,7 @@ from app.models.models import Ambulance, Hospital, EmergencyRequest
 from app.graph_loader import load_road_network, path_to_coords, path_length_km
 from app.dsa.dijkstra import dijkstra
 from app.dsa.geo import snap_to_node, position_along_path
-from app.api.requests import dispatch_waiting
+from app.api.requests import dispatch_waiting, prune_completed
 
 router = APIRouter()
 
@@ -172,6 +172,12 @@ def sweep_arrived(db, graph, coords, now):
     # patients. This is what keeps the triage queue draining instead of
     # growing without bound.
     dispatched = [r.id for r in dispatch_waiting(db)]
+
+    # Only worth checking when something actually finished, which is the only
+    # moment the completed count can have grown.
+    if completed:
+        prune_completed(db)
+
     return completed, dispatched
 
 
