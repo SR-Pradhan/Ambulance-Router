@@ -111,7 +111,22 @@ body {
 
 /* The map tab is edge to edge and fills the viewport; the dashboard keeps
    its comfortable reading width. */
-.workarea.is-map { padding: 16px; }
+/* A flex column rather than a plain block, so the error banner can appear
+   above the layout and take its own height instead of the layout's fixed
+   100% pushing itself out of the clipped work area. */
+.workarea.is-map {
+  padding: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workarea.is-map > .layout {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
 .workarea.is-board { padding: 22px; }
 .workarea.is-board > * { max-width: 1320px; margin-inline: auto; }
 
@@ -268,7 +283,20 @@ body {
 
 /* --- Layout --------------------------------------------------------------- */
 
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; height: 100%; }
+/* grid-template-rows is NOT decorative here. With the default `auto` row the
+   row is content sized and therefore indefinite, so `height: 100%` on a grid
+   item cannot resolve and silently falls back to auto: the map then collapses
+   to its own min-height while the taller right column sets the row height.
+   `minmax(0, 1fr)` against a 100% tall container makes the row definite, so
+   the map fills it. The 0 minimum is what lets it shrink rather than being
+   floored by its content. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+}
 @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } }
 
 aside {
@@ -276,6 +304,7 @@ aside {
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 2px;
 }
@@ -317,11 +346,20 @@ aside {
 
 /* --- Map ------------------------------------------------------------------ */
 
-.map-wrap { display: flex; flex-direction: column; gap: 9px; min-width: 0; height: 100%; }
+.map-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
 
 .map {
   flex: 1;
-  min-height: 380px;
+  /* A low floor, not a target: on a short window the map should shrink
+     rather than push the hint off the bottom. */
+  min-height: 240px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -1099,7 +1137,8 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
 
   .workspace { overflow: visible; }
 
-  .workarea {
+  .workarea,
+  .workarea.is-map {
     overflow: visible;
     min-height: 0;
   }
@@ -1137,7 +1176,7 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
 
   .rail-badge { position: static; }
 
-  .layout { height: auto; }
+  .layout { height: auto; grid-template-rows: auto; }
   .map { height: 520px; flex: none; }
   aside { overflow: visible; }
 }
