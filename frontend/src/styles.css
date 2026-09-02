@@ -18,46 +18,56 @@
 :root {
   color-scheme: light;
 
-  /* Surfaces: a faint cool tint rather than pure grey, so white panels read as
-     raised rather than flat against the page. */
-  --bg: #f4f6fa;
+  /* Surfaces: warm neutrals rather than cool grey, so the teal reads as a
+     deliberate accent instead of part of a blue-grey wash. */
+  --bg: #f6f5f3;
   --surface: #ffffff;
-  --surface-sunken: #eef1f6;
-  --border: #e3e8ef;
-  --border-strong: #cbd5e1;
+  --surface-sunken: #eeecea;
+  --border: #e2dfda;
+  --border-strong: #cfcac2;
 
-  /* Ink: slate rather than neutral grey. Slightly cooler and richer. */
-  --ink: #0f172a;
-  --ink-secondary: #475569;
-  --ink-muted: #64748b;
+  --ink: #1a1a19;
+  --ink-secondary: #55524d;
+  --ink-muted: #6f6b64;
 
-  /* Accent */
-  --accent: #1d4ed8;
-  --accent-hover: #1e40af;
-  --accent-tint: #e8f0fe;
+  /* Teal accent. --accent is the button/solid colour; --accent-ink is the
+     darker step used for teal TEXT on a teal tint, because the solid colour
+     measures only 4.33 there and fails AA. */
+  --accent: #0d7d74;
+  --accent-hover: #0a635c;
+  --accent-ink: #0a635c;
+  --accent-tint: #e9f6f4;
   --on-accent: #ffffff;
 
-  /* Status: text ink and its matching tint. Every pair was contrast checked;
-     the green is deliberately darker than it looks like it needs to be,
-     because the lighter shade landed at 4.49 on its own tint, just under AA. */
+  /* Status. Every ink/tint pair below was measured; the warning ink is the
+     darker #8a5406 rather than #a16207 because the latter lands at 4.39 on
+     its own tint. Do not lighten it back. */
   --good: #166534;
-  --good-tint: #e7f6ec;
-  --warning: #a16207;
-  --warning-tint: #fdf4e3;
+  --good-tint: #e4f2e8;
+  --warning: #8a5406;
+  --warning-tint: #fdf6e8;
   --critical: #b91c1c;
-  --critical-tint: #fdeceb;
+  --critical-tint: #fceceb;
 
-  /* Status marks, for dots and map pins */
   --dot-good: #16a34a;
-  --dot-warning: #f59e0b;
+  --dot-warning: #d97706;
   --dot-critical: #dc2626;
-  --dot-neutral: #94a3b8;
+  --dot-neutral: #9c968d;
+
+  /* The navigation rail is graphite in BOTH themes. An always dark rail is
+     what separates an operations console from a page with a menu on it, and
+     it gives the teal somewhere bright to sit in light mode. */
+  --rail-bg: #16181b;
+  --rail-ink: #a8a49e;
+  --rail-ink-active: #ffffff;
+  --rail-accent: #2dd4bf;
+  --rail-border: #26292d;
 
   --radius: 12px;
   --radius-sm: 8px;
-  /* Two layered shadows: a tight one for the edge, a soft wide one for lift. */
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 8px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 2px 4px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.09);
+  --rail-w: 74px;
+  --shadow: 0 1px 2px rgba(20, 18, 15, 0.05), 0 2px 8px rgba(20, 18, 15, 0.05);
+  --shadow-lg: 0 2px 4px rgba(20, 18, 15, 0.06), 0 12px 28px rgba(20, 18, 15, 0.10);
 }
 
 * { box-sizing: border-box; }
@@ -73,88 +83,175 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.app { max-width: 1440px; margin: 0 auto; padding: 24px 24px 48px; }
-
-/* --- Header --------------------------------------------------------------- */
-
-header {
+/* The console shell. The page itself never scrolls: the rail and the top bar
+   are fixed furniture and only the work area scrolls inside them, which is
+   what makes a dispatch screen feel like an application rather than a
+   document. Reverted to normal document flow on narrow screens, where a
+   locked 100vh fights the mobile browser chrome. */
+.shell {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  padding-bottom: 18px;
-  margin-bottom: 22px;
-  border-bottom: 1px solid var(--border);
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* Brand block: a coloured mark beside the title. The mark carries the only
-   large field of accent colour in the layout, which is what makes the page
-   read as a product rather than a form. */
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 13px;
+.workspace {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.brand-mark {
+.workarea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 22px 40px;
+}
+
+/* The map tab is edge to edge and fills the viewport; the dashboard keeps
+   its comfortable reading width. */
+.workarea.is-map { padding: 16px; }
+.workarea.is-board { padding: 22px; }
+.workarea.is-board > * { max-width: 1320px; margin-inline: auto; }
+
+/* --- Navigation rail ------------------------------------------------------ */
+
+.rail {
   flex: none;
-  width: 42px;
-  height: 42px;
+  width: var(--rail-w);
+  background: var(--rail-bg);
+  border-right: 1px solid var(--rail-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 0;
+}
+
+.rail-mark {
+  width: 40px;
+  height: 40px;
   border-radius: 11px;
   display: grid;
   place-items: center;
-  font-size: 21px;
+  font-size: 20px;
   line-height: 1;
-  background: linear-gradient(150deg, var(--accent), var(--accent-hover));
-  box-shadow: 0 2px 10px rgba(29, 78, 216, 0.28);
+  margin-bottom: 12px;
+  background: linear-gradient(150deg, #2dd4bf, #0d7d74);
+  box-shadow: 0 2px 12px rgba(45, 212, 191, 0.3);
 }
 
-header h1 {
+.rail-btn {
+  position: relative;
+  width: 58px;
+  padding: 9px 0 7px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--rail-ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.rail-btn .rail-icon { font-size: 17px; line-height: 1; }
+
+.rail-btn:hover { background: rgba(255, 255, 255, 0.06); color: var(--rail-ink-active); }
+
+.rail-btn.is-active {
+  background: rgba(45, 212, 191, 0.13);
+  color: var(--rail-ink-active);
+}
+
+/* The active tab is marked by a teal bar on the rail edge as well as by the
+   fill, so the current view is not signalled by colour alone. */
+.rail-btn.is-active::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  border-radius: 0 3px 3px 0;
+  background: var(--rail-accent);
+}
+
+.rail-btn:focus-visible {
+  outline: 2px solid var(--rail-accent);
+  outline-offset: 2px;
+}
+
+.rail-spacer { flex: 1; }
+
+/* --- Top bar -------------------------------------------------------------- */
+
+.topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 12px 22px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 {
   margin: 0;
-  font-size: 21px;
+  font-size: 16px;
   font-weight: 650;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   color: var(--ink-muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 
-/* Segmented tab control */
-nav {
+/* Live figures, promoted out of the dashboard so the numbers that matter are
+   on screen while you are looking at the map. */
+.topbar-live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.live-pill {
   display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 3px;
-  gap: 3px;
-}
-
-nav button {
-  background: transparent;
+  font-size: 12px;
   color: var(--ink-secondary);
-  border: 0;
-  padding: 7px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+  white-space: nowrap;
 }
 
-nav button:hover { color: var(--ink); }
-
-nav button.active {
-  background: var(--surface);
+.live-pill b {
+  font-size: 13px;
+  font-weight: 650;
   color: var(--ink);
-  box-shadow: var(--shadow);
+  font-variant-numeric: tabular-nums;
 }
+
+.live-pill.is-warning { background: var(--warning-tint); border-color: transparent; }
+.live-pill.is-warning b { color: var(--warning); }
+.live-pill.is-critical { background: var(--critical-tint); border-color: transparent; }
+.live-pill.is-critical b { color: var(--critical); }
 
 .badge {
   background: var(--accent);
@@ -172,10 +269,17 @@ nav button.active {
 
 /* --- Layout --------------------------------------------------------------- */
 
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 20px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; height: 100%; }
 @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } }
 
-aside { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+aside {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
 .dashboard { display: flex; flex-direction: column; gap: 20px; }
 
 /* --- Panels --------------------------------------------------------------- */
@@ -214,10 +318,11 @@ aside { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
 /* --- Map ------------------------------------------------------------------ */
 
-.map-wrap { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.map-wrap { display: flex; flex-direction: column; gap: 9px; min-width: 0; height: 100%; }
 
 .map {
-  height: 640px;
+  flex: 1;
+  min-height: 380px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -457,7 +562,7 @@ td.actions .row-actions { display: flex; gap: 6px; align-items: center; }
 .chip-critical { background: var(--critical-tint); color: var(--critical); }
 .chip-critical::before { background: var(--dot-critical); }
 
-.chip-info { background: var(--accent-tint); color: var(--accent); }
+.chip-info { background: var(--accent-tint); color: var(--accent-ink); }
 .chip-info::before { background: var(--accent); }
 
 /* --- Messages ------------------------------------------------------------- */
@@ -598,20 +703,21 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --bg: #0b1120;
-    --surface: #131a2a;
-    --surface-sunken: #1b2436;
-    --border: #263449;
-    --border-strong: #384864;
+    --bg: #0f1113;
+    --surface: #17191c;
+    --surface-sunken: #1f2226;
+    --border: #2b2f34;
+    --border-strong: #3d434a;
 
-    --ink: #e8edf5;
-    --ink-secondary: #a9b6cb;
-    --ink-muted: #8494ad;
+    --ink: #eceae7;
+    --ink-secondary: #b3afa9;
+    --ink-muted: #8d8983;
 
-    --accent: #7cb0f8;
-    --accent-hover: #9cc4fa;
-    --accent-tint: #17263f;
-    --on-accent: #0b1120;
+    --accent: #2dd4bf;
+    --accent-hover: #5fd9c8;
+    --accent-ink: #2dd4bf;
+    --accent-tint: #10312e;
+    --on-accent: #0f1113;
 
     --good: #5fd67f;
     --good-tint: #14301f;
@@ -623,7 +729,10 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
     --dot-good: #22c55e;
     --dot-warning: #f59e0b;
     --dot-critical: #ef4444;
-    --dot-neutral: #64748b;
+    --dot-neutral: #6b6862;
+
+    --rail-bg: #131518;
+    --rail-border: #24272b;
 
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
     --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.55), 0 14px 32px rgba(0, 0, 0, 0.45);
@@ -633,20 +742,21 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-    --bg: #0b1120;
-  --surface: #131a2a;
-  --surface-sunken: #1b2436;
-  --border: #263449;
-  --border-strong: #384864;
+      --bg: #0f1113;
+  --surface: #17191c;
+  --surface-sunken: #1f2226;
+  --border: #2b2f34;
+  --border-strong: #3d434a;
 
-  --ink: #e8edf5;
-  --ink-secondary: #a9b6cb;
-  --ink-muted: #8494ad;
+  --ink: #eceae7;
+  --ink-secondary: #b3afa9;
+  --ink-muted: #8d8983;
 
-  --accent: #7cb0f8;
-  --accent-hover: #9cc4fa;
-  --accent-tint: #17263f;
-  --on-accent: #0b1120;
+  --accent: #2dd4bf;
+  --accent-hover: #5fd9c8;
+  --accent-ink: #2dd4bf;
+  --accent-tint: #10312e;
+  --on-accent: #0f1113;
 
   --good: #5fd67f;
   --good-tint: #14301f;
@@ -658,7 +768,10 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
   --dot-good: #22c55e;
   --dot-warning: #f59e0b;
   --dot-critical: #ef4444;
-  --dot-neutral: #64748b;
+  --dot-neutral: #6b6862;
+
+  --rail-bg: #131518;
+  --rail-border: #24272b;
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.55), 0 14px 32px rgba(0, 0, 0, 0.45);
@@ -729,7 +842,7 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
   padding: 2px 7px;
   border-radius: 4px;
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* --- Map legend ----------------------------------------------------------- */
@@ -939,7 +1052,7 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
   width: 21px; height: 21px;
   border-radius: 50%;
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-ink);
   font-size: 12px;
   font-weight: 600;
   display: flex; align-items: center; justify-content: center;
@@ -955,3 +1068,79 @@ th.col-grow, td.col-grow { width: 100%; white-space: normal; }
 }
 .path-detail summary:hover { color: var(--ink); }
 .path-detail p { margin: 6px 0; word-break: break-word; }
+
+/* --- Rail badge ----------------------------------------------------------- */
+
+.rail-badge {
+  position: absolute;
+  top: 4px;
+  right: 7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--rail-accent);
+  color: #0f1113;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Console shell, narrow screens ---------------------------------------
+   Below 1080px the locked-height shell is abandoned. A fixed 100vh fights
+   the address bar on mobile, and a 74px rail beside a stacked layout wastes
+   width that the map needs, so the rail becomes a horizontal strip and the
+   page scrolls normally again. */
+@media (max-width: 1080px) {
+  .shell {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .workspace { overflow: visible; }
+
+  .workarea {
+    overflow: visible;
+    min-height: 0;
+  }
+
+  .rail {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--rail-border);
+  }
+
+  .rail-mark { margin-bottom: 0; margin-right: 6px; }
+
+  .rail-btn {
+    width: auto;
+    flex-direction: row;
+    gap: 7px;
+    padding: 8px 14px;
+    font-size: 12.5px;
+  }
+
+  .rail-btn.is-active::before {
+    left: 50%;
+    top: auto;
+    bottom: -8px;
+    transform: translateX(-50%);
+    width: 22px;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .rail-badge { position: static; }
+
+  .layout { height: auto; }
+  .map { height: 520px; flex: none; }
+  aside { overflow: visible; }
+}

@@ -40,7 +40,7 @@ stream of critical arrivals still gets served.
 elapsed time along its computed route, so it is consistent on every request and
 survives a restart. No GPS is involved and none is claimed.
 
-🎨 **Built to be read.** Light and dark themes, a map legend, skeleton loading
+🎨 **Built to be read.** An operations console shell (fixed rail, live figures in the top bar, one scrolling work area), light and dark themes, a map legend, skeleton loading
 states, and WCAG AA contrast throughout. No status is signalled by colour alone.
 
 ---

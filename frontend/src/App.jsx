@@ -181,76 +181,122 @@ export default function App() {
 
   const movingCount = live.filter((a) => a.request_id !== null).length;
 
+  // The figures worth having on screen at all times, including while you are
+  // looking at the map rather than the dashboard.
+  const pills = overview
+    ? [
+        { label: "beds free", value: overview.hospitals.available_beds },
+        {
+          label: "units free",
+          value: overview.ambulances.available,
+          tone: overview.ambulances.available === 0 ? "critical" : null,
+        },
+        { label: "en route", value: overview.requests.en_route },
+        {
+          label: "in queue",
+          value: queue?.waiting ?? 0,
+          tone: queue?.waiting > 0 ? "warning" : null,
+        },
+      ]
+    : [];
+
   return (
-    <div className="app">
-      <header>
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">🚑</span>
+    <div className="shell">
+      <nav className="rail" aria-label="Views">
+        <span className="rail-mark" aria-hidden="true">🚑</span>
+
+        <button
+          type="button"
+          className={`rail-btn ${tab === "map" ? "is-active" : ""}`}
+          aria-current={tab === "map" ? "page" : undefined}
+          onClick={() => setTab("map")}
+        >
+          <span className="rail-icon" aria-hidden="true">🗺️</span>
+          Map
+          {movingCount > 0 && (
+            <span className="rail-badge">
+              {movingCount}
+              <span className="sr-only"> ambulances moving</span>
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          className={`rail-btn ${tab === "dashboard" ? "is-active" : ""}`}
+          aria-current={tab === "dashboard" ? "page" : undefined}
+          onClick={() => setTab("dashboard")}
+        >
+          <span className="rail-icon" aria-hidden="true">📊</span>
+          Board
+        </button>
+
+        <span className="rail-spacer" />
+      </nav>
+
+      <div className="workspace">
+        <header className="topbar">
           <div>
             <h1>Ambulance Route Optimizer</h1>
             <p className="subtitle">
-              Simulated data. A portfolio demonstration, not a medically
-              validated system.
+              Simulated data. Not a medically validated system.
             </p>
           </div>
-        </div>
-        <div className="header-controls">
-          <ThemeToggle theme={theme} resolved={resolved} onChange={setTheme} />
-          <nav>
-          <button
-            className={tab === "map" ? "active" : ""}
-            onClick={() => setTab("map")}
-          >
-            Map {movingCount > 0 && <span className="badge">{movingCount}</span>}
-          </button>
-          <button
-            className={tab === "dashboard" ? "active" : ""}
-            onClick={() => setTab("dashboard")}
-          >
-            Dashboard
-          </button>
-          </nav>
-        </div>
-      </header>
 
-      {connError && (
-        <p className="error-banner">
-          Cannot reach the API. {connError}. If you are running locally, check the
-          backend is started with{" "}
-          <code>uvicorn app.main:app --reload --port 8001</code>
-        </p>
-      )}
+          <div className="topbar-live">
+            {pills.map((p) => (
+              <span
+                key={p.label}
+                className={`live-pill ${p.tone ? `is-${p.tone}` : ""}`}
+              >
+                <b>{p.value}</b> {p.label}
+              </span>
+            ))}
+            <ThemeToggle theme={theme} resolved={resolved} onChange={setTheme} />
+          </div>
+        </header>
 
-      {tab === "map" ? (
-        <div className="layout">
-          <MapView
-            hospitals={hospitals}
-            live={live}
-            patient={patient}
-            onPickPatient={pickPatient}
-          />
-          <aside>
-            <RequestForm
-              patient={patient}
-              onPickPatient={pickPatient}
-              onSubmit={createRequest}
-              busy={busy}
+        <main className={`workarea ${tab === "map" ? "is-map" : "is-board"}`}>
+          {connError && (
+            <p className="error-banner">
+              Cannot reach the API. {connError}. If you are running locally,
+              check the backend is started with{" "}
+              <code>uvicorn app.main:app --reload --port 8001</code>
+            </p>
+          )}
+
+          {tab === "map" ? (
+            <div className="layout">
+              <MapView
+                hospitals={hospitals}
+                live={live}
+                patient={patient}
+                onPickPatient={pickPatient}
+              />
+              <aside>
+                <RequestForm
+                  patient={patient}
+                  onPickPatient={pickPatient}
+                  onSubmit={createRequest}
+                  busy={busy}
+                />
+                <ResultsPanel result={result} />
+              </aside>
+            </div>
+          ) : (
+            <Dashboard
+              overview={overview}
+              hospitals={hospitals}
+              requests={requests}
+              queue={queue}
+              unlocked={unlocked}
+              onUnlockChange={setUnlocked}
+              onUpdateBeds={updateBeds}
+              onComplete={completeRequest}
             />
-            <ResultsPanel result={result} />
-          </aside>
-        </div>
-      ) : (
-        <Dashboard
-          overview={overview}
-          hospitals={hospitals}
-          requests={requests}
-          queue={queue}
-          unlocked={unlocked}
-          onUnlockChange={setUnlocked}
-          onUpdateBeds={updateBeds}
-          onComplete={completeRequest}
-        />
-      )}
+          )}
+        </main>
+      </div>
     </div>
   );
 }
