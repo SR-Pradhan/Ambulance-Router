@@ -141,7 +141,7 @@ the point of keeping `app/dsa/` free of any framework imports.
 | `GET` | `/hospitals/nearby?lat=&lng=&top_k=` | Rank hospitals by straight-line distance |
 | `GET` | `/hospitals` | All hospitals with capacity and units |
 | `PATCH` | `/hospitals/{id}/beds` | 🔐 Update available beds |
-| `POST` | `/requests` | Create an emergency request and dispatch |
+| `POST` | `/requests` | Create an emergency request and dispatch. `algo=auto\|dijkstra\|astar` |
 | `GET` | `/requests?status=&limit=` | List requests. `status=active\|all` |
 | `GET` | `/requests/{id}` | One request with its route |
 | `PATCH` | `/requests/{id}/complete` | 🔐 Finish a trip, free the ambulance |
@@ -188,10 +188,13 @@ frontend/src/
   components/
     MapView.jsx      🗺️ Leaflet map, live ambulances, routes
     RequestForm.jsx  📝 Address search, device location, severity, dispatch
-    ResultsPanel.jsx 📊 Chosen hospital, route, ETA
-    Dashboard.jsx    🎛️ Capacity management, triage queue, requests
+    ResultsPanel.jsx 📊 Chosen hospital, route, ETA, search cost
+    Dashboard.jsx    🎛️ Capacity, triage queue, requests
+    AlgoCompare.jsx  ⚡ Dijkstra against A*, side by side
     AdminLock.jsx    🔐 Unlock control for the gated actions
     ThemeToggle.jsx  🌓 Light, dark and system themes
+    Logo.jsx         🚑 The project mark
+    Icons.jsx        Inline SVG icons for the navigation rail
 ```
 
 The `dsa/` ↔ `api/` split is the central design decision: **algorithms never import
@@ -228,7 +231,8 @@ Stated deliberately rather than hidden:
   can be a few hundred metres from the actual pin. The map draws that last
   stretch as a dashed line labelled "not routed" rather than pretending to
   cover it.
-- 📡 Live positions are interpolated from elapsed time since dispatch, not GPS. Trips auto-complete on arrival, so `/ambulances/live` writes state: a deliberate trade to avoid running a background worker.
+- 📡 Live positions are interpolated from elapsed time since dispatch, at 10x real
+  time so a journey is watchable, not GPS. Trips auto-complete on arrival, so `/ambulances/live` writes state: a deliberate trade to avoid running a background worker.
 - 🔒 Admin actions (changing beds, completing a trip) are gated by a single
   shared key, not real accounts. It proves a request was *authorised*, not *who*
   made it, and there is no audit trail. Viewing stays public.
