@@ -91,7 +91,7 @@ async function request(path, options = {}) {
 export const api = {
   // Dispatch
   createRequest: (patient_lat, patient_lng, severity = "standard",
-                  required_facility = null) =>
+                  required_facility = null, algo = "auto") =>
     request("/requests", {
       method: "POST",
       body: JSON.stringify({
@@ -99,8 +99,13 @@ export const api = {
         patient_lng,
         severity,
         required_facility,
+        algo,
       }),
     }),
+
+  /** Dijkstra against A* between two junctions. Powers the Board's comparison. */
+  compareRoute: (source, dest) =>
+    request(`/route?source=${source}&dest=${dest}&algo=compare`),
   queue: () => request("/queue"),
   listRequests: (status = "active") =>
     request(`/requests?status=${encodeURIComponent(status)}`),

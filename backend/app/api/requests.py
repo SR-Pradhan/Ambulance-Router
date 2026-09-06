@@ -8,6 +8,7 @@ from app.models.models import Hospital, Ambulance, EmergencyRequest
 from app.graph_loader import load_road_network, path_length_km
 from app.schemas.requests import EmergencyRequestCreate
 from app.dsa.dijkstra import dijkstra_all, reconstruct_path
+from app.dsa.astar import astar
 from app.dsa.geo import snap_to_node
 from app.dsa.heap_ranking import (rank_hospitals, rank_by_distance,
                                   CAPACITY_PENALTY_MINUTES)
@@ -24,12 +25,25 @@ AVG_AMBULANCE_SPEED_KMH = 40.0
 
 
 def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
-                       required_facility: str | None = None):
+                       required_facility: str | None = None,
+                       algo: str = "auto"):
     """Pick the best hospital for a patient and route to it.
 
     This is where the two halves of the project finally meet: the heap picks
     the hospital, Dijkstra finds the road route. Ranking is on ROAD distance,
     not straight-line -- which is the whole point of this version.
+
+    `algo` selects the search, and the result reports what that choice cost.
+
+    "auto" (and "dijkstra") run ONE dijkstra_all from the patient. That single
+    sweep yields the travel time to every junction, so it answers "which
+    hospital?" and "which ambulance?" together.
+
+    "astar" runs A* separately for every candidate. A* is only faster when
+    there is one known destination, and dispatch has many, so this is
+    genuinely the slower option: it is offered so the difference can be
+    demonstrated rather than asserted, and the returned `search` block reports
+    the searches run and nodes expanded either way.
 
     Returns a result dict, or None if no hospital with free beds is reachable.
     """
@@ -42,11 +56,37 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
     # 2. The patient gave us a coordinate; Dijkstra needs a node.
     patient_node, patient_offset = snap_to_node(patient_lat, patient_lng, coords)
 
-    # 3. ONE Dijkstra run gives the travel TIME to every node, and therefore to
-    #    every hospital. Since v1.7 the graph is weighted in minutes, so these
-    #    are durations, not distances. Running it once per hospital would
-    #    repeat this work.
-    distances, prev = dijkstra_all(graph, patient_node)
+    # 3. The search itself. `solve(target)` hides which algorithm is in use so
+    #    the ranking code below is identical either way, and `search` records
+    #    the cost so the caller can show it.
+    search = {"algorithm": "astar" if algo == "astar" else "dijkstra",
+              "searches": 0, "nodes_expanded": 0}
+
+    if algo == "astar":
+        # One search PER TARGET. The heuristic needs a destination, so there is
+        # no way to answer "how far to everything" in a single A* run.
+        def solve(target):
+            stats = {}
+            path, minutes = astar(graph, patient_node, target, coords, stats=stats)
+            search["searches"] += 1
+            search["nodes_expanded"] += stats.get("nodes_expanded", 0)
+            if path is None:
+                return None, float("inf")
+            return path, minutes
+    else:
+        # ONE Dijkstra run gives the travel TIME to every node, and therefore
+        # to every hospital. Since v1.7 the graph is weighted in minutes, so
+        # these are durations, not distances.
+        stats = {}
+        distances, prev = dijkstra_all(graph, patient_node, stats=stats)
+        search["searches"] = 1
+        search["nodes_expanded"] = stats.get("nodes_expanded", 0)
+
+        def solve(target):
+            minutes = distances.get(target, float("inf"))
+            if minutes == float("inf"):
+                return None, float("inf")
+            return reconstruct_path(prev, patient_node, target), minutes
 
     # 4. Build the candidate list, measured by road distance.
     candidates = []
@@ -63,13 +103,12 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
             continue
 
         h_node, h_offset = snap_to_node(h.latitude, h.longitude, coords)
-        minutes = distances.get(h_node, float('inf'))
-        if minutes == float('inf'):
+        h_path, minutes = solve(h_node)
+        if h_path is None:
             continue  # unreachable from the patient (e.g. disconnected road)
 
         # Ranking happens on TIME; the kilometres are carried alongside purely
         # so the answer can be explained to a human.
-        h_path = reconstruct_path(prev, patient_node, h_node)
         road_km = path_length_km(h_path, coords)
 
         candidates.append({
@@ -84,6 +123,9 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
             "distance": round(road_km, 3),          # physical km, for display
             "travel_minutes": round(minutes, 2),    # the key the heap ranks on
             "distance_type": "road",
+            # Kept so the winner's route is not searched a second time, which
+            # would double the A* cost for no reason.
+            "_path": h_path,
         })
 
     if not candidates:
@@ -102,8 +144,8 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
                             cost_key="travel_minutes")
     best = ranked[0]
 
-    # 6. The actual route to the winner, and how long it should take.
-    path = reconstruct_path(prev, patient_node, best["node_id"])
+    # 6. The route to the winner, already computed when it was a candidate.
+    path = best.pop("_path", None)
     # The ETA is the routed travel time itself. Before v1.7 it was derived from
     # distance and a flat assumed speed; now traffic is already baked into the
     # edge weights, so the number the router produced IS the estimate.
@@ -119,10 +161,9 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
         if a.status != "available":
             continue
         a_node, _ = snap_to_node(a.current_lat, a.current_lng, coords)
-        pickup_minutes = distances.get(a_node, float('inf'))
-        if pickup_minutes == float('inf'):
+        a_path, pickup_minutes = solve(a_node)
+        if a_path is None:
             continue
-        a_path = reconstruct_path(prev, patient_node, a_node)
         ambulance_candidates.append({
             "id": a.id,
             "current_lat": a.current_lat,
@@ -130,6 +171,7 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
             "node_id": a_node,
             "distance": round(path_length_km(a_path, coords), 3),
             "travel_minutes": round(pickup_minutes, 2),
+            "_path": a_path,
         })
 
     # Nearest by TIME, not by distance: a closer ambulance stuck behind traffic
@@ -139,9 +181,7 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
     ambulance = nearest[0] if nearest else None
 
     if ambulance is not None:
-        ambulance["pickup_path"] = reconstruct_path(
-            prev, patient_node, ambulance["node_id"]
-        )
+        ambulance["pickup_path"] = ambulance.pop("_path", None)
         ambulance["pickup_eta_minutes"] = round(ambulance["travel_minutes"], 1)
 
     return {
@@ -163,7 +203,10 @@ def compute_best_route(db: Session, patient_lat: float, patient_lng: float,
             round(ambulance["pickup_eta_minutes"] + eta_minutes, 1)
             if ambulance else None
         ),
-        "alternatives": ranked[1:],
+        "alternatives": [
+            {k: v for k, v in alt.items() if k != "_path"} for alt in ranked[1:]
+        ],
+        "search": search,
     }
 
 
@@ -338,7 +381,7 @@ def get_queue(db: Session = Depends(get_db)):
 def create_request(payload: EmergencyRequestCreate, db: Session = Depends(get_db)):
     """Create an emergency request: choose a hospital, route to it, store it."""
     result = compute_best_route(db, payload.patient_lat, payload.patient_lng,
-                                payload.required_facility)
+                                payload.required_facility, payload.algo)
 
     if _failed(result):
         # Say WHICH constraint could not be met. "No hospital has a cardiac

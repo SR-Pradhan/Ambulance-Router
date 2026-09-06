@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AdminLock from "./AdminLock";
+import AlgoCompare from "./AlgoCompare";
 
 function Stat({ label, value, sub, tone, subTone }) {
   return (
@@ -294,6 +295,8 @@ export default function Dashboard({
           <p className="note">Nobody is waiting. Every request has an ambulance.</p>
         )}
       </div>
+
+      <AlgoCompare />
 
       <div className="panel">
         <div className="panel-head">

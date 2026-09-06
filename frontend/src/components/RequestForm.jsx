@@ -36,6 +36,7 @@ const DEMO = { lat: 28.4746, lng: 77.0518 };
 
 export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) {
   const [severity, setSeverity] = useState("standard");
+  const [algo, setAlgo] = useState("auto");
   const [error, setError] = useState(null);
 
   const [query, setQuery] = useState("");
@@ -140,7 +141,7 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
       // picker was removed because a caller cannot reasonably know which
       // specialist unit is needed; the backend filter still works and is
       // exercised through the API and the Board's Units column.
-      await onSubmit(patient.lat, patient.lng, severity, null);
+      await onSubmit(patient.lat, patient.lng, severity, null, algo);
     } catch (err) {
       setError(err.message);
     }
@@ -249,6 +250,49 @@ export default function RequestForm({ patient, onPickPatient, onSubmit, busy }) 
           </label>
         ))}
       </fieldset>
+
+      {/* Choosing the search is a demonstration, not a tuning knob. Dispatch
+          needs the cost to every hospital AND every ambulance, so one Dijkstra
+          sweep answers all of them, while A* has to run once per candidate.
+          The Result panel prints the searches and nodes each one actually
+          cost, so the difference is measured rather than claimed. */}
+      <details className="algo-picker">
+        <summary>Routing algorithm: {algo === "astar" ? "A*" : "Dijkstra"}</summary>
+        <div className="algo-options">
+          <label className={`algo-option ${algo === "auto" ? "is-active" : ""}`}>
+            <input
+              type="radio"
+              name="algo"
+              checked={algo === "auto"}
+              onChange={() => setAlgo("auto")}
+            />
+            <span>
+              <strong>Dijkstra, one sweep</strong>
+              <span className="sub">
+                A single search returns the time to every junction, so every
+                hospital and every ambulance is scored at once. The right
+                choice here.
+              </span>
+            </span>
+          </label>
+          <label className={`algo-option ${algo === "astar" ? "is-active" : ""}`}>
+            <input
+              type="radio"
+              name="algo"
+              checked={algo === "astar"}
+              onChange={() => setAlgo("astar")}
+            />
+            <span>
+              <strong>A*, one search per candidate</strong>
+              <span className="sub">
+                A* needs a destination, so it cannot answer "how far to
+                everything" in one run. Same answer, several times the work.
+                Pick it to see the cost.
+              </span>
+            </span>
+          </label>
+        </div>
+      </details>
 
       {error && <p className="warn-text">{error}</p>}
 

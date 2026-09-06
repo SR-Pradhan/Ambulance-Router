@@ -20,9 +20,17 @@ then dispatches the nearest available ambulance and tracks it on a live map.
 and the triage priority queue are all implemented from scratch — no `networkx`, no
 shortest-path library.
 
-⚡ **A\* is measurably faster, and provably correct.** `/route?algo=compare` runs both
-and reports node expansions: on the real 433-junction network Dijkstra expands **379**
-nodes and A\* expands **286**, for the same route.
+⚡ **A\* is measurably faster, and provably correct.** Compare them from the Board,
+or via `/route?algo=compare`: Dijkstra expands **208** nodes, A\* expands **168**,
+for an identical 8.16 min route. Equal duration is the proof the heuristic never
+overestimates; fewer nodes is the proof it is actually doing something.
+
+🧭 **Each algorithm runs where it belongs.** Live tracking uses A\*, because both of
+its searches have one known destination. Dispatch uses a single Dijkstra sweep,
+because it must score every hospital *and* every ambulance at once. Dispatching the
+same request with A\* instead takes **13 searches and 1851 nodes** against **1 and
+433**, for the same answer, and the UI reports it so the trade-off is measured
+rather than asserted.
 
 🚦 **Traffic changes the road taken, not just the ETA.** Edge weights are travel
 **time**, so a congested shortcut loses to a clear detour. On the demo grid a 3.9 km

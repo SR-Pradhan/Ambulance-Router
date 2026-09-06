@@ -31,3 +31,9 @@ class EmergencyRequestCreate(BaseModel):
                         "severity": "critical", "required_facility": "cardiac"}
         }
     }
+
+    # Which search to use for dispatch. "auto" is one dijkstra_all sweep and is
+    # what you want; "astar" runs a separate A* per candidate and is offered so
+    # the difference can be measured rather than argued about. Validated here
+    # so an unknown value is a 422 before any routing code runs.
+    algo: str = Field("auto", pattern="^(auto|dijkstra|astar)$")

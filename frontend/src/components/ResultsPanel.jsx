@@ -23,7 +23,8 @@ export default function ResultsPanel({ result }) {
     );
   }
 
-  const { hospital, route, ambulance, alternatives, total_eta_minutes, status } = result;
+  const { hospital, route, ambulance, alternatives, total_eta_minutes, status, search } =
+    result;
 
   return (
     <div className="panel">
@@ -87,6 +88,27 @@ export default function ResultsPanel({ result }) {
           </div>
         </div>
       </div>
+
+      {/* What the algorithm choice actually cost, in the units that matter for
+          a search: how many searches ran and how many nodes came off the
+          priority queue. */}
+      {search && (
+        <div className="search-cost">
+          <span className="label">Search</span>
+          <strong>
+            {search.algorithm === "astar" ? "A*" : "Dijkstra"}
+            {" · "}
+            {search.searches} {search.searches === 1 ? "search" : "searches"}
+            {" · "}
+            {search.nodes_expanded} nodes expanded
+          </strong>
+          <span className="sub">
+            {search.algorithm === "astar"
+              ? "A* was run once for every hospital and ambulance, because a heuristic needs a destination. One Dijkstra sweep answers all of them at once for less work."
+              : "One sweep from the patient scored every hospital and every ambulance together."}
+          </span>
+        </div>
+      )}
 
       <dl className="detail-list">
         <div>
