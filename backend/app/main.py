@@ -2,7 +2,8 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import route, hospitals, requests, ambulances, admin
+from app.api import route, hospitals, requests, ambulances, admin, search
+from app.api.search import build_search_index
 
 app = FastAPI(title="Ambulance Route Optimizer")
 
@@ -42,6 +43,12 @@ app.include_router(hospitals.router)
 app.include_router(requests.router)
 app.include_router(ambulances.router)
 app.include_router(admin.router)
+app.include_router(search.router)
+
+
+@app.on_event("startup")
+def on_startup():
+    build_search_index()
 
 
 @app.get("/")

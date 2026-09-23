@@ -117,6 +117,7 @@ export const api = {
 
   // Hospitals and capacity
   listHospitals: () => request("/hospitals"),
+  searchHospitals: (q) => request(`/search/hospitals?q=${encodeURIComponent(q)}`),
   updateBeds: (id, available_beds) =>
     request(`/hospitals/${id}/beds`, {
       method: "PATCH",

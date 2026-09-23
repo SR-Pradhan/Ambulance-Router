@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import AdminLock from "./AdminLock";
 import AlgoCompare from "./AlgoCompare";
+import { api } from "../api/client";
 
 function Stat({ label, value, sub, tone, subTone }) {
   return (
@@ -50,6 +51,27 @@ export default function Dashboard({
   const [error, setError] = useState(null);
   const [draft, setDraft] = useState({});
 
+  const [hospitalQuery, setHospitalQuery] = useState("");
+  const [matchedNames, setMatchedNames] = useState(null);
+  const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (!hospitalQuery.trim()) {
+      setMatchedNames(null);
+      return;
+    }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const result = await api.searchHospitals(hospitalQuery.trim());
+        setMatchedNames(result.matches);
+      } catch {
+        setMatchedNames([]);
+      }
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [hospitalQuery]);
+
   const run = async (fn) => {
     setError(null);
     try {
@@ -59,8 +81,6 @@ export default function Dashboard({
     }
   };
 
-  // A skeleton rather than the word "Loading": it shows the shape of what is
-  // coming, so the layout does not jump when the data lands.
   if (!overview) {
     return (
       <div className="dashboard" aria-busy="true" aria-live="polite">
@@ -90,9 +110,11 @@ export default function Dashboard({
   const activeCount =
     (requestMeta?.byStatus?.pending ?? 0) + (requestMeta?.byStatus?.en_route ?? 0);
 
-  // Beds are edited as a number, committed on blur or Enter. This replaced a
-  // pair of increment buttons: typing 0 to close a hospital is one action
-  // instead of eight clicks.
+  const visibleHospitals =
+    matchedNames === null
+      ? hospitals
+      : hospitals.filter((hosp) => matchedNames.includes(hosp.name));
+
   const commitBeds = (hosp) => {
     const raw = draft[hosp.id];
     if (raw === undefined) return;
@@ -134,8 +156,6 @@ export default function Dashboard({
           value={`${h.occupancy_percent}%`}
           tone={h.occupancy_percent > 85 ? "critical" : undefined}
         />
-        {/* The count of accepting hospitals is good news, so it stays neutral.
-            The concern is the number that are FULL, so the tone goes there. */}
         <Stat
           label="Hospitals accepting"
           value={h.accepting_patients}
@@ -164,6 +184,13 @@ export default function Dashboard({
             immediately. The ranking heap already filters on bed availability, so
             no routing code is involved.
           </p>
+          <input
+            type="text"
+            className="hospital-search-input"
+            placeholder="Search hospital name..."
+            value={hospitalQuery}
+            onChange={(e) => setHospitalQuery(e.target.value)}
+          />
         </div>
 
         <div className="table-wrap">
@@ -180,7 +207,7 @@ export default function Dashboard({
               </tr>
             </thead>
             <tbody>
-              {hospitals.map((hosp) => (
+              {visibleHospitals.map((hosp) => (
                 <tr key={hosp.id} className={hosp.accepting ? "" : "row-inactive"}>
                   <td className="col-grow">{hosp.name}</td>
                   <td className="numeric">
@@ -239,6 +266,11 @@ export default function Dashboard({
                   </td>
                 </tr>
               ))}
+              {visibleHospitals.length === 0 && hospitalQuery.trim() && (
+                <tr className="empty-row">
+                  <td colSpan="7">No hospital matches "{hospitalQuery}".</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -266,9 +298,6 @@ export default function Dashboard({
                 <tr>
                   <th>Position</th>
                   <th>Request</th>
-                  {/* Absorbs the slack so Position and Request stay tight on
-                      the left and the numeric columns stay tight on the right,
-                      instead of all five drifting apart. */}
                   <th className="col-grow">Severity</th>
                   <th className="numeric">Waited</th>
                   <th className="numeric">Score</th>
@@ -302,10 +331,6 @@ export default function Dashboard({
         <div className="panel-head">
           <div className="head-row">
             <h2>Emergency requests</h2>
-            {/* Completed trips are kept, not deleted: a finished request is the
-                record of which hospital was chosen and why. They are just not
-                what a dispatcher is looking at, so they are one click away
-                rather than in the way. */}
             <div className="scope-toggle" role="group" aria-label="Which requests to show">
               <button
                 type="button"
